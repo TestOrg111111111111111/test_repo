@@ -26,11 +26,11 @@ jobs:
 
       - name: Build and Tag Docker Image
         run: |
-          IMAGE_NAME="ghcr.io/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/cloak-server"
+          IMAGE_NAME="ghcr.io/igor-stovba/dobbyvpn-server/cloak-server"
           docker build -f Dockerfile-cloak-server -t "$IMAGE_NAME:latest" .
 
       - name: Push Docker Image
         run: |
-          IMAGE_NAME="ghcr.io/${{ github.repository }}/cloak-server"
+          IMAGE_NAME="ghcr.io/igor-stovba/dobbyvpn-server/cloak-server"
           docker push "$IMAGE_NAME:latest"
 
