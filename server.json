@@ -1,0 +1,10 @@
+{
+  "servers": [
+      {
+          "proxyListen": ":20222",
+          "proxyMode": "zero-overhead",
+          "wgEndpoint": "[::1]:20221",
+          "mtu": 1500
+      }
+  ]
+}
