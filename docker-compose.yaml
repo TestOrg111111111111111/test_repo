@@ -18,7 +18,11 @@ services:
     image: cloak-server
     restart: always
     network_mode: "host"
-
+    entrypoint: ["/app/entrypoint.sh"]
+    command: ["/app/ck-server", "-c", "/app/config.json"]
+    volumes:
+      - ./cloak-server.conf:/app/config.json
+      - ./entrypoint-cloak-server.sh:/app/entrypoint.sh  
 
   wireguard:
     image: masipcat/wireguard-go:latest
