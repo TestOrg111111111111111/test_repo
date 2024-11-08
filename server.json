@@ -3,6 +3,7 @@
       {
           "proxyListen": ":20222",
           "proxyMode": "zero-overhead",
+          "proxyPSK": "sAe5RvzLJ3Q0Ll88QRM1N01dYk83Q4y0rXMP1i4rDmI=",
           "wgEndpoint": "[::1]:20221",
           "mtu": 1500
       }
