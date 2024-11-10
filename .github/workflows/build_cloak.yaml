@@ -29,14 +29,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build and Tag Docker Image
+      - name: Build, Tag and Push Docker Image
         run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME="ghcr.io/$REPO/cloak-server"
+          IMAGE_NAME="ghcr.io/$OWNER/$REPO/cloak-server"
           docker build -f Dockerfile-cloak-server -t "$IMAGE_NAME:latest" .
-
-      - name: Push Docker Image
-        run: |
-          REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME="ghcr.io/$REPO/cloak-server"
           docker push "$IMAGE_NAME:latest"
+
