@@ -32,7 +32,7 @@ jobs:
 
       - name: Push Docker Image
         run: |
-          VAR=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME="ghcr.io/$VAR/cloak-server"
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="ghcr.io/$OWNER/$REPO/cloak-server"
           docker push "$IMAGE_NAME:latest"
-
