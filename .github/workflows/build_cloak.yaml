@@ -6,6 +6,11 @@ on:
       - main  
   workflow_dispatch:
 
+env:
+  REPO: $(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+  IMAGE_NAME: "ghcr.io/$REPO/cloak-server"
+
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -26,13 +31,12 @@ jobs:
 
       - name: Build and Tag Docker Image
         run: |
-          VAR=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME="ghcr.io/$VAR/cloak-server"
+          # REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          # IMAGE_NAME="ghcr.io/$REPO/cloak-server"
           docker build -f Dockerfile-cloak-server -t "$IMAGE_NAME:latest" .
 
       - name: Push Docker Image
         run: |
-          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME="ghcr.io/$OWNER/$REPO/cloak-server"
+          # REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          # IMAGE_NAME="ghcr.io/$REPO/cloak-server"
           docker push "$IMAGE_NAME:latest"
