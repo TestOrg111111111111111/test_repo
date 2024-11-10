@@ -6,9 +6,9 @@ on:
       - main  
   workflow_dispatch:
 
-env:
-  REPO: $(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-  IMAGE_NAME: "ghcr.io/$REPO/cloak-server"
+# env:
+  # REPO: $(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+  # IMAGE_NAME: "ghcr.io/$REPO/cloak-server"
 
 
 jobs:
@@ -31,12 +31,12 @@ jobs:
 
       - name: Build and Tag Docker Image
         run: |
-          # REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-          # IMAGE_NAME="ghcr.io/$REPO/cloak-server"
+          REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="ghcr.io/$REPO/cloak-server"
           docker build -f Dockerfile-cloak-server -t "$IMAGE_NAME:latest" .
 
       - name: Push Docker Image
         run: |
-          # REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-          # IMAGE_NAME="ghcr.io/$REPO/cloak-server"
+          REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="ghcr.io/$REPO/cloak-server"
           docker push "$IMAGE_NAME:latest"
