@@ -26,10 +26,10 @@ jobs:
 
       - name: Build, Tag and Push Docker Image
         run: |
-          # OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          # REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-          # IMAGE_NAME="ghcr.io/$OWNER/$REPO/cloak-server"
-          IMAGE_NAME="ghcr.io/${{ github.repository }}/cloak-server"
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="ghcr.io/$OWNER/$REPO/cloak-server"
+          # IMAGE_NAME="ghcr.io/${{ github.repository }}/cloak-server"
           docker build -f Dockerfile-cloak-server -t "$IMAGE_NAME:latest" .
           docker push "$IMAGE_NAME:latest"
 

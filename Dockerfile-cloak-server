@@ -19,14 +19,4 @@ RUN apk upgrade --no-cache && \
     apk add --no-cache tzdata && \
     rm -rf /var/cache/apk/*
 
-
-# WORKDIR /app
-# COPY --from=build /opt/Cloak/build/ck-server /app/ck-server
-# COPY cloak-server.conf /app/config.json
-# COPY entrypoint-cloak-server.sh /app/entrypoint.sh
-# RUN chmod +x /app/ck-server
-# RUN chmod +x /app/entrypoint.sh
-
-# ENTRYPOINT ["/app/entrypoint.sh"]
-# CMD ["/app/ck-server", "-c", "/app/config.json"]
-
+LABEL org.opencontainers.image.source=https://github.com/Igor-Stovba/dobbyvpn-server
