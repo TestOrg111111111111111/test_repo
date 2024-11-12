@@ -15,7 +15,6 @@ services:
 
 
   cloak-server:
-    # image: cloak-server
     image: ghcr.io/igor-stovba/dobbyvpn-server/cloak-server:latest
     restart: always
     network_mode: "host"
