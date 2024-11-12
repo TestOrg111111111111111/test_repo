@@ -16,13 +16,20 @@ services:
 
   cloak-server:
     image: ghcr.io/igor-stovba/dobbyvpn-server/cloak-server:latest
+    command: ["/app/ck-server", "-c", "/app/config.json"]
     restart: always
     network_mode: "host"
-    entrypoint: ["/app/entrypoint.sh"]
-    command: ["/app/ck-server", "-c", "/app/config.json"]
     volumes:
       - ./cloak-server.conf:/app/config.json
-      - ./entrypoint-cloak-server.sh:/app/entrypoint.sh  
+
+  swgp-server:
+    container_name: swgp-server
+    image: vnxme/swgp-go:latest
+    network_mode: "host"
+    restart: unless-stopped
+    volumes:
+      - ./server.json:/etc/swgp-go/config.json
+
 
   wireguard:
     image: masipcat/wireguard-go:latest
@@ -30,8 +37,8 @@ services:
     network_mode: "host"
     cap_add:
       - NET_ADMIN
-    #sysctls:
-    # - net.ipv4.ip_forward=1
+    # sysctls:
+    #  - net.ipv4.ip_forward=1
     volumes:
      - /dev/net/tun:/dev/net/tun
      - ./wireguard:/etc/wireguard
@@ -40,14 +47,6 @@ services:
      - LOG_LEVEL=info
     restart: always
 
-
-  swgp-server:
-    container_name: swgp-server
-    image: vnxme/swgp-go:latest
-    network_mode: "host"
-    restart: unless-stopped
-    volumes:
-      - ./server.json:/etc/swgp-go/config.json:ro
 
 volumes:
   caddy_data:
