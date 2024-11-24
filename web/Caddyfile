@@ -1,18 +1,21 @@
 
-:443 {
+0.0.0.0:443 {
 
     log {
         output stdout
     }
 
-    @specialPath {
+    @cloakPath {
         path /special-url
     }
 
-    reverse_proxy @specialPath 127.0.0.1:8443  # cloak-server's port
-
+    reverse_proxy @cloakPath 127.0.0.1:8443  # cloak-server's port
+    
     handle {
-        redir https://www.google.com
+        reverse_proxy https://www.google.com {
+            header_up Host {upstream_hostport}  # Preserve Google's hostname.
+        }
     }
-}
+
+   }
 
