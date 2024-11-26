@@ -1,5 +1,5 @@
 
-0.0.0.0:443 {
+:443 {
 
     log {
         output stdout
@@ -9,12 +9,15 @@
         path /special-url
     }
 
-    reverse_proxy @cloakPath 127.0.0.1:8443  # cloak-server's port
-    
+    handle @cloakPath {
+	reverse_proxy @cloakPath 127.0.0.1:8443
+        #respond "URL FOUND-CLOAK" 200
+    }	
+
     handle {
-        reverse_proxy https://www.google.com {
-            header_up Host {upstream_hostport}  # Preserve Google's hostname.
-        }
+        root * /usr/share/caddy
+	file_server 
+        #respond "FILE SERVER" 200
     }
 
    }
