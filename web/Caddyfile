@@ -1,24 +1,17 @@
+{
+   debug
+}
 
-:443 {
-
-    log {
-        output stdout
-    }
-
+abby.nocloud.today {
     @cloakPath {
         path /special-url
     }
-
     handle @cloakPath {
-	reverse_proxy @cloakPath 127.0.0.1:8443
-        #respond "URL FOUND-CLOAK" 200
-    }	
-
+        reverse_proxy @cloakPath 127.0.0.1:8443
+    }
     handle {
-        root * /usr/share/caddy
-	file_server 
-        #respond "FILE SERVER" 200
+        root * /usr/share/caddy/index.html
+        file_server
     }
 
-   }
-
+}
