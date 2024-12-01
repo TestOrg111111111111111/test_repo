@@ -15,7 +15,7 @@ services:
 
 
   cloak-server:
-    image: ghcr.io/igor-stovba/dobbyvpn-server/cloak-server:latest
+    image: ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:latest
     command: ["/app/ck-server", "-c", "/app/config.json"]
     restart: always
     network_mode: "host"
