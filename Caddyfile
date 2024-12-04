@@ -2,7 +2,7 @@
    debug
 }
 
-abby.nocloud.today {
+<domain_name> {
     @cloakPath {
         path /special-url
     }
