@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"runtime"
 )
 
 type Connection interface {
@@ -12,7 +11,7 @@ type Connection interface {
 	turn_off(interface_name string)
 }
 
-type WireguardUnix struct {
+type Wireguard struct {
 	address    string
 	dns        string
 	mtu        string
@@ -20,7 +19,7 @@ type WireguardUnix struct {
 	wg_content string
 }
 
-type AmneziaWGUnix struct {
+type AmneziaWG struct {
 	address     string
 	dns         string
 	mtu         string
@@ -56,7 +55,7 @@ func test_connection(conn Connection, name string) {
 	conn.turn_off(name)
 }
 
-func build_wireguard_unix() WireguardUnix {
+func build_wireguard() Wireguard {
 	data, err := os.ReadFile(config_path)
 
 	if err != nil {
@@ -66,25 +65,10 @@ func build_wireguard_unix() WireguardUnix {
 
 	wg_content := string(data)
 
-	return WireguardUnix{address, dns, mtu, allowed_ip, wg_content}
+	return Wireguard{address, dns, mtu, allowed_ip, wg_content}
 }
 
-func build_wireguard() Connection {
-	switch runtime.GOOS {
-	case "windows":
-		os.Exit(1)
-	case "darwin":
-		os.Exit(1)
-	case "linux":
-		return build_wireguard_unix()
-	default:
-		os.Exit(1)
-	}
-
-	return build_wireguard_unix()
-}
-
-func build_amneziawg_unix() AmneziaWGUnix {
+func build_amneziawg() AmneziaWG {
 	data, err := os.ReadFile(config_path)
 
 	if err != nil {
@@ -94,28 +78,13 @@ func build_amneziawg_unix() AmneziaWGUnix {
 
 	wg_content := string(data)
 
-	return AmneziaWGUnix{address, dns, mtu, allowed_ip, wg_content}
-}
-
-func build_amneziawg() Connection {
-	switch runtime.GOOS {
-	case "windows":
-		os.Exit(1)
-	case "darwin":
-		os.Exit(1)
-	case "linux":
-		return build_amneziawg_unix()
-	default:
-		os.Exit(1)
-	}
-
-	return build_amneziawg_unix()
+	return AmneziaWG{address, dns, mtu, allowed_ip, wg_content}
 }
 
 func main() {
 	flag.StringVar(&config_path, "config", CONGIG_PATH_DEFAULT, CONGIG_PATH_USAGE)
 	flag.StringVar(&connection_type, "type", TYPE_DEFAULT, TYPE_USAGE)
-	flag.StringVar(&interface_name, "iname", TYPE_DEFAULT, TYPE_USAGE)
+	flag.StringVar(&interface_name, "iname", INTERFACE_NAME_DEFAULT, INTERFACE_NAME_USAGE)
 	flag.StringVar(&address, "address", ADDRESS_DEFAULT, ADDRESS_USAGE)
 	flag.StringVar(&dns, "dns", DNS_DEFAULT, DNS_USAGE)
 	flag.StringVar(&mtu, "mtu", MTU_DEFAULT, MTU_USAGE)

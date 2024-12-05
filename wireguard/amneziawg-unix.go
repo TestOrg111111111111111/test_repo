@@ -12,7 +12,7 @@ const AWG_QUICK = "./libs/awg-quick/linux.bash"
 const AWG_GO = "./libs/amneziawg-go"
 const AWG_CONFIG_FOLDER = "/etc/amnezia/amneziawg/"
 
-func (wg AmneziaWGUnix) run_interface(interface_name string) {
+func (wg AmneziaWG) run_interface(interface_name string) {
 	var cmd = exec.Command("sudo", AWG_GO, interface_name)
 
 	if err := cmd.Run(); err != nil {
@@ -24,7 +24,7 @@ func (wg AmneziaWGUnix) run_interface(interface_name string) {
 	}
 }
 
-func (wg AmneziaWGUnix) set_config(interface_name string) {
+func (wg AmneziaWG) set_config(interface_name string) {
 	file_path := AWG_CONFIG_FOLDER + interface_name + ".conf"
 	file, err := os.OpenFile(file_path, os.O_WRONLY|os.O_CREATE, 0604)
 
@@ -54,7 +54,7 @@ func (wg AmneziaWGUnix) set_config(interface_name string) {
 	fmt.Printf("+ Set config\n")
 }
 
-func (wg AmneziaWGUnix) add_address(interface_name string, address string) {
+func (wg AmneziaWG) add_address(interface_name string, address string) {
 	var cmd = exec.Command("sudo", "ip", "-4", "address", "add", address, "dev", interface_name)
 
 	if err := cmd.Run(); err != nil {
@@ -66,7 +66,7 @@ func (wg AmneziaWGUnix) add_address(interface_name string, address string) {
 	}
 }
 
-func (wg AmneziaWGUnix) set_mtu(interface_name string, mtu string) {
+func (wg AmneziaWG) set_mtu(interface_name string, mtu string) {
 	var cmd = exec.Command("sudo", "ip", "link", "set", "mtu", mtu, "up", "dev", interface_name)
 
 	if err := cmd.Run(); err != nil {
@@ -78,7 +78,7 @@ func (wg AmneziaWGUnix) set_mtu(interface_name string, mtu string) {
 	}
 }
 
-func (wg AmneziaWGUnix) turn_on(interface_name string) {
+func (wg AmneziaWG) turn_on(interface_name string) {
 	wg.run_interface(interface_name)
 	wg.set_config(interface_name)
 	wg.add_address(interface_name, wg.address)
@@ -89,7 +89,7 @@ func (wg AmneziaWGUnix) turn_on(interface_name string) {
 	}
 }
 
-func (wg AmneziaWGUnix) turn_off(interface_name string) {
+func (wg AmneziaWG) turn_off(interface_name string) {
 	var cmd = exec.Command("sudo", "ip", "link", "del", interface_name)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		fmt.Printf("Could not remove AmneziaWG interface: %s\n", err)

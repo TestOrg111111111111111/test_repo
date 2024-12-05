@@ -12,7 +12,7 @@ const WG_QUICK = "./libs/wg-quick/linux.bash"
 const WG_GO = "./libs/wireguard-go"
 const WG_CONFIG_FOLDER = "/etc/wireguard/"
 
-func (wg WireguardUnix) run_interface(interface_name string) {
+func (wg Wireguard) run_interface(interface_name string) {
 	var cmd = exec.Command("sudo", WG_GO, interface_name)
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Could not run Wireguard interface: %s\n", err)
@@ -23,7 +23,7 @@ func (wg WireguardUnix) run_interface(interface_name string) {
 	}
 }
 
-func (wg WireguardUnix) set_config(interface_name string) {
+func (wg Wireguard) set_config(interface_name string) {
 	file_path := WG_CONFIG_FOLDER + interface_name + ".conf"
 	file, err := os.OpenFile(file_path, os.O_WRONLY|os.O_CREATE, 0644)
 
@@ -53,7 +53,7 @@ func (wg WireguardUnix) set_config(interface_name string) {
 	fmt.Printf("+ Set config\n")
 }
 
-func (wg WireguardUnix) add_address(interface_name string, address string) {
+func (wg Wireguard) add_address(interface_name string, address string) {
 	var cmd = exec.Command("sudo", "ip", "-4", "address", "add", address, "dev", interface_name)
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Could not add address %s: %s\n", address, err)
@@ -64,7 +64,7 @@ func (wg WireguardUnix) add_address(interface_name string, address string) {
 	}
 }
 
-func (wg WireguardUnix) set_mtu(interface_name string, mtu string) {
+func (wg Wireguard) set_mtu(interface_name string, mtu string) {
 	var cmd = exec.Command("sudo", "ip", "link", "set", "mtu", mtu, "up", "dev", interface_name)
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Could not set up mtu %s: %s\n", mtu, err)
@@ -75,7 +75,7 @@ func (wg WireguardUnix) set_mtu(interface_name string, mtu string) {
 	}
 }
 
-func (wg WireguardUnix) turn_on(interface_name string) {
+func (wg Wireguard) turn_on(interface_name string) {
 	wg.run_interface(interface_name)
 	wg.set_config(interface_name)
 	wg.add_address(interface_name, wg.address)
@@ -86,7 +86,7 @@ func (wg WireguardUnix) turn_on(interface_name string) {
 	}
 }
 
-func (wg WireguardUnix) turn_off(interface_name string) {
+func (wg Wireguard) turn_off(interface_name string) {
 	var cmd = exec.Command("sudo", "ip", "link", "del", interface_name)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		fmt.Printf("Could not remove Wireguard interface: %s\n", err)
