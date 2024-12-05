@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime"
 )
 
 type Connection interface {
@@ -65,7 +66,22 @@ func build_wireguard_unix() WireguardUnix {
 	return WireguardUnix{address, dns, mtu, allowed_ip, wg_content}
 }
 
-func build_amnezia() AmneziaWGUnix {
+func build_wireguard() Connection {
+	switch runtime.GOOS {
+	case "windows":
+		os.Exit(1)
+	case "darwin":
+		os.Exit(1)
+	case "linux":
+		return build_wireguard_unix()
+	default:
+		os.Exit(1)
+	}
+
+	return build_wireguard_unix()
+}
+
+func build_amneziawg_unix() AmneziaWGUnix {
 	data, err := os.ReadFile(config_path)
 
 	if err != nil {
@@ -78,6 +94,21 @@ func build_amnezia() AmneziaWGUnix {
 	return AmneziaWGUnix{address, dns, mtu, allowed_ip, wg_content}
 }
 
+func build_amneziawg() Connection {
+	switch runtime.GOOS {
+	case "windows":
+		os.Exit(1)
+	case "darwin":
+		os.Exit(1)
+	case "linux":
+		return build_amneziawg_unix()
+	default:
+		os.Exit(1)
+	}
+
+	return build_amneziawg_unix()
+}
+
 func main() {
 	flag.StringVar(&config_path, "config", CONGIG_PATH_DEFAULT, CONGIG_PATH_USAGE)
 	flag.StringVar(&connection_type, "type", TYPE_DEFAULT, TYPE_USAGE)
@@ -87,9 +118,9 @@ func main() {
 	flag.StringVar(&allowed_ip, "ips", ALLOWED_IP_DEFAULT, ALLOWED_IP_USAGE)
 	flag.Parse()
 
-	var wg = build_wireguard_unix()
+	var wg = build_wireguard()
 	test_connection(wg, "wg0")
 
-	var awg = build_amnezia()
+	var awg = build_amneziawg()
 	test_connection(awg, "awg0")
 }
