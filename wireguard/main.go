@@ -1,44 +1,95 @@
 package main
- 
-import (
-    "fmt"
-	"flag"
-)
 
-const ADDRESS = "10.9.9.2/24"
-const MTU = "1420"
-const ALLOWED_IP = "0.0.0.0/0"
+import (
+	"flag"
+	"fmt"
+	"os"
+)
 
 type Connection interface {
 	turn_on(interface_name string)
 	turn_off(interface_name string)
 }
 
-const CONGIG_PATH_DEFAULT = "/etc/amnezia/amneziawg/"
+type Wireguard struct {
+	address    string
+	dns        string
+	mtu        string
+	allowed_ip string
+	wg_content string
+}
+
+type AmneziaWG struct {
+	address     string
+	dns         string
+	mtu         string
+	allowed_ip  string
+	awg_content string
+}
+
+const CONGIG_PATH_DEFAULT = "awg0.conf"
 const CONGIG_PATH_USAGE = "Path to the config"
 const TYPE_DEFAULT = "amneziawg"
 const TYPE_USAGE = "Connection type, values: wireguard (alternative: wg) or amneziawg (alternative: awg))"
+const ADDRESS_DEFAULT = "10.9.9.2/24"
+const ADDRESS_USAGE = "Interface address"
+const DNS_DEFAULT = "8.8.8.8"
+const DNS_USAGE = "Interface DNS"
+const MTU_DEFAULT = "1420"
+const MTU_USAGE = "Tunnel MTU"
+const ALLOWED_IP_DEFAULT = "0.0.0.0/0"
+const ALLOWED_IP_USAGE = "Interface peer allowed ips"
 
 var config_path string
 var connection_type string
+var address string
+var dns string
+var mtu string
+var allowed_ip string
 
 func test_connection(conn Connection, name string) {
 	conn.turn_on(name)
 	conn.turn_off(name)
 }
 
-func main() {
-	flag.StringVar(&config_path, "c", CONGIG_PATH_DEFAULT, CONGIG_PATH_USAGE + " (shorthand)")
-	flag.StringVar(&config_path, "config", CONGIG_PATH_DEFAULT, CONGIG_PATH_USAGE)
-	flag.StringVar(&connection_type, "t", TYPE_DEFAULT, TYPE_USAGE + " (shorthand)")
-	flag.StringVar(&connection_type, "type", TYPE_DEFAULT, TYPE_USAGE)
-	flag.Parse()
-	
-    fmt.Printf("Parameters: %s, %s\n", config_path, connection_type)
+func build_wireguard() Wireguard {
+	data, err := os.ReadFile(config_path)
 
-	var wg = Wireguard { config_path }
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+		os.Exit(1)
+	}
+
+	wg_content := string(data)
+
+	return Wireguard{address, dns, mtu, allowed_ip, wg_content}
+}
+
+func build_amnezia() AmneziaWG {
+	data, err := os.ReadFile(config_path)
+
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+		os.Exit(1)
+	}
+
+	wg_content := string(data)
+
+	return AmneziaWG{address, dns, mtu, allowed_ip, wg_content}
+}
+
+func main() {
+	flag.StringVar(&config_path, "config", CONGIG_PATH_DEFAULT, CONGIG_PATH_USAGE)
+	flag.StringVar(&connection_type, "type", TYPE_DEFAULT, TYPE_USAGE)
+	flag.StringVar(&address, "address", ADDRESS_DEFAULT, ADDRESS_USAGE)
+	flag.StringVar(&dns, "dns", DNS_DEFAULT, DNS_USAGE)
+	flag.StringVar(&mtu, "mtu", MTU_DEFAULT, MTU_USAGE)
+	flag.StringVar(&allowed_ip, "ips", ALLOWED_IP_DEFAULT, ALLOWED_IP_USAGE)
+	flag.Parse()
+
+	var wg = build_wireguard()
 	test_connection(wg, "wg0")
 
-	var awg = AmneziaWG { config_path }
+	var awg = build_amnezia()
 	test_connection(awg, "awg0")
 }
