@@ -11,7 +11,7 @@ type Connection interface {
 	turn_off(interface_name string)
 }
 
-type Wireguard struct {
+type WireguardUnix struct {
 	address    string
 	dns        string
 	mtu        string
@@ -19,7 +19,7 @@ type Wireguard struct {
 	wg_content string
 }
 
-type AmneziaWG struct {
+type AmneziaWGUnix struct {
 	address     string
 	dns         string
 	mtu         string
@@ -52,7 +52,7 @@ func test_connection(conn Connection, name string) {
 	conn.turn_off(name)
 }
 
-func build_wireguard() Wireguard {
+func build_wireguard_unix() WireguardUnix {
 	data, err := os.ReadFile(config_path)
 
 	if err != nil {
@@ -62,10 +62,10 @@ func build_wireguard() Wireguard {
 
 	wg_content := string(data)
 
-	return Wireguard{address, dns, mtu, allowed_ip, wg_content}
+	return WireguardUnix{address, dns, mtu, allowed_ip, wg_content}
 }
 
-func build_amnezia() AmneziaWG {
+func build_amnezia() AmneziaWGUnix {
 	data, err := os.ReadFile(config_path)
 
 	if err != nil {
@@ -75,7 +75,7 @@ func build_amnezia() AmneziaWG {
 
 	wg_content := string(data)
 
-	return AmneziaWG{address, dns, mtu, allowed_ip, wg_content}
+	return AmneziaWGUnix{address, dns, mtu, allowed_ip, wg_content}
 }
 
 func main() {
@@ -87,7 +87,7 @@ func main() {
 	flag.StringVar(&allowed_ip, "ips", ALLOWED_IP_DEFAULT, ALLOWED_IP_USAGE)
 	flag.Parse()
 
-	var wg = build_wireguard()
+	var wg = build_wireguard_unix()
 	test_connection(wg, "wg0")
 
 	var awg = build_amnezia()
