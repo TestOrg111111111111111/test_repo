@@ -7,6 +7,3 @@
 [submodule "wireguard/amneziawg-tools"]
 	path = wireguard/amneziawg-tools
 	url = https://github.com/amnezia-vpn/amneziawg-tools
-[submodule "wireguard/wireguard-tools"]
-	path = wireguard/wireguard-tools
-	url = https://github.com/WireGuard/wireguard-tools
