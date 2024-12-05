@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 const WG = "./libs/wg"
@@ -80,7 +81,9 @@ func (wg Wireguard) turn_on(interface_name string) {
 	wg.add_address(interface_name, wg.address)
 	wg.set_mtu(interface_name, wg.mtu)
 	// Set dns
-	wg.add_address(interface_name, wg.allowed_ip)
+	for _, aip := range strings.Split(wg.allowed_ip, " ") {
+		wg.add_address(interface_name, aip)
+	}
 }
 
 func (wg Wireguard) turn_off(interface_name string) {
