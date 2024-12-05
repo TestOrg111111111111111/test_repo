@@ -1,0 +1,9 @@
+[submodule "wireguard/wireguard-go"]
+	path = wireguard/wireguard-go
+	url = https://github.com/WireGuard/wireguard-go
+[submodule "wireguard/amneziawg-go"]
+	path = wireguard/amneziawg-go
+	url = https://github.com/amnezia-vpn/amneziawg-go
+[submodule "wireguard/amneziawg-tools"]
+	path = wireguard/amneziawg-tools
+	url = https://github.com/amnezia-vpn/amneziawg-tools
