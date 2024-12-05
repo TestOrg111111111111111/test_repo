@@ -32,6 +32,8 @@ const CONGIG_PATH_DEFAULT = "awg0.conf"
 const CONGIG_PATH_USAGE = "Path to the config"
 const TYPE_DEFAULT = "amneziawg"
 const TYPE_USAGE = "Connection type, values: wireguard (alternative: wg) or amneziawg (alternative: awg))"
+const INTERFACE_NAME_DEFAULT = "awg0"
+const INTERFACE_NAME_USAGE = "Interface name"
 const ADDRESS_DEFAULT = "10.9.9.2/24"
 const ADDRESS_USAGE = "Interface address"
 const DNS_DEFAULT = "8.8.8.8"
@@ -43,6 +45,7 @@ const ALLOWED_IP_USAGE = "Interface peer allowed ips"
 
 var config_path string
 var connection_type string
+var interface_name string
 var address string
 var dns string
 var mtu string
@@ -112,15 +115,22 @@ func build_amneziawg() Connection {
 func main() {
 	flag.StringVar(&config_path, "config", CONGIG_PATH_DEFAULT, CONGIG_PATH_USAGE)
 	flag.StringVar(&connection_type, "type", TYPE_DEFAULT, TYPE_USAGE)
+	flag.StringVar(&interface_name, "iname", TYPE_DEFAULT, TYPE_USAGE)
 	flag.StringVar(&address, "address", ADDRESS_DEFAULT, ADDRESS_USAGE)
 	flag.StringVar(&dns, "dns", DNS_DEFAULT, DNS_USAGE)
 	flag.StringVar(&mtu, "mtu", MTU_DEFAULT, MTU_USAGE)
 	flag.StringVar(&allowed_ip, "ips", ALLOWED_IP_DEFAULT, ALLOWED_IP_USAGE)
 	flag.Parse()
 
-	var wg = build_wireguard()
-	test_connection(wg, "wg0")
+	var connection Connection
+	switch connection_type {
+	case "amneziawg", "awg":
+		connection = build_amneziawg()
+	case "wireguard", "wg":
+		connection = build_wireguard()
+	default:
+		connection = build_amneziawg()
+	}
 
-	var awg = build_amneziawg()
-	test_connection(awg, "awg0")
+	test_connection(connection, "awg0")
 }
