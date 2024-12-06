@@ -52,7 +52,7 @@ var allowed_ip string
 
 func test_connection(conn Connection, name string) {
 	conn.turn_on(name)
-	conn.turn_off(name)
+	// conn.turn_off(name)
 }
 
 func build_wireguard() Wireguard {
