@@ -2,29 +2,17 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
+	"log"
 )
 
-type Connection interface {
-	turn_on(interface_name string)
-	turn_off(interface_name string)
-}
-
-type Wireguard struct {
-	address    string
-	dns        string
-	mtu        string
-	allowed_ip string
-	wg_content string
-}
-
-type AmneziaWG struct {
-	address     string
-	dns         string
-	mtu         string
-	allowed_ip  string
-	awg_content string
+type ConnectionData struct{
+	configContent   string
+	interfaceName   string
+	address         string
+	dns             string
+	mtu             string
+	allowed_ip      string
 }
 
 const CONGIG_PATH_DEFAULT = "awg0.conf"
@@ -44,66 +32,46 @@ const ALLOWED_IP_USAGE = "Interface peer allowed ips"
 const MODE_DEFAULT = "yes"
 const MODE_USAGE = "Turn on/Turn of (yes/no)"
 
-var config_path string
-var connection_type string
-var interface_name string
-var address string
-var dns string
-var mtu string
-var allowed_ip string
-var mode string
-
-func build_wireguard() Wireguard {
-	data, err := os.ReadFile(config_path)
-
-	if err != nil {
-		fmt.Printf("Error: %s\n", err)
-		os.Exit(1)
-	}
-
-	wg_content := string(data)
-
-	return Wireguard{address, dns, mtu, allowed_ip, wg_content}
-}
-
-func build_amneziawg() AmneziaWG {
-	data, err := os.ReadFile(config_path)
-
-	if err != nil {
-		fmt.Printf("Error: %s\n", err)
-		os.Exit(1)
-	}
-
-	wg_content := string(data)
-
-	return AmneziaWG{address, dns, mtu, allowed_ip, wg_content}
-}
-
 func main() {
+	var config_path string
+	var connection_type string
+	var interfaceName string
+	var address string
+	var dns string
+	var mtu string
+	var allowed_ip string
+	var mode string
+
 	flag.StringVar(&config_path, "config", CONGIG_PATH_DEFAULT, CONGIG_PATH_USAGE)
 	flag.StringVar(&connection_type, "type", TYPE_DEFAULT, TYPE_USAGE)
-	flag.StringVar(&interface_name, "iname", INTERFACE_NAME_DEFAULT, INTERFACE_NAME_USAGE)
+	flag.StringVar(&interfaceName, "iname", INTERFACE_NAME_DEFAULT, INTERFACE_NAME_USAGE)
 	flag.StringVar(&address, "address", ADDRESS_DEFAULT, ADDRESS_USAGE)
 	flag.StringVar(&dns, "dns", DNS_DEFAULT, DNS_USAGE)
 	flag.StringVar(&mtu, "mtu", MTU_DEFAULT, MTU_USAGE)
 	flag.StringVar(&allowed_ip, "ips", ALLOWED_IP_DEFAULT, ALLOWED_IP_USAGE)
 	flag.StringVar(&mode, "mode", MODE_DEFAULT, MODE_USAGE)
-	flag.Parse()
 
-	var connection Connection
-	switch connection_type {
-	case "amneziawg", "awg":
-		connection = build_amneziawg()
-	case "wireguard", "wg":
-		connection = build_wireguard()
-	default:
-		connection = build_amneziawg()
-	}
+	flag.Parse()
+	
+	data, err := os.ReadFile(config_path)
+	if err != nil { log.Fatal(err) }
+	configContent := string(data)
+	connectionData := ConnectionData { configContent, interfaceName, address, dns, mtu, allowed_ip }
 
 	switch mode {
 	case "yes":
-		connection.turn_on(interface_name)
+		switch connection_type {
+		case "amneziawg", "awg":
+			tunnelAmneziaWGOn(connectionData)
+		case "wireguard", "wg":
+			tunnelWireguardOn(connectionData)
+		}
 	case "no":
-		connection.turn_off(interface_name)
+		switch connection_type {
+		case "amneziawg", "awg":
+			tunnelAmneziaWGOff(connectionData)
+		case "wireguard", "wg":
+			tunnelWireguardOff(connectionData)
+		}
 	}
 }
