@@ -94,8 +94,12 @@ function main {
 
     docker-compose -f ./dobbyvpn-server/docker-compose.yaml up -d
 
+    filename="creds.txt"
     array_creds["special-url"]=$URL
-    save_credentials creds.txt $array_creds
+    save_credentials $filename $array_creds
+
+    echo "All credentials are saved in $filename"
+    echo "Done!"
 }
 
 main
