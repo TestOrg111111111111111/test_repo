@@ -35,13 +35,16 @@ else
     endif
 endif
 
+all: build
+
 build: prepare
-	GOARCH=${GOARCH_FLAG} GOOS=${GOOS_FLAG} go build -o ${BINARY_NAME} main.go amneziawg-${GOOS_FLAG}-${GOARCH_FLAG}.go wireguard-${GOOS_FLAG}-${GOARCH_FLAG}.go
+	GOARCH=${GOARCH_FLAG} GOOS=${GOOS_FLAG} go build -o bin/${BINARY_NAME} main.go amneziawg-${GOOS_FLAG}-${GOARCH_FLAG}.go wireguard-${GOOS_FLAG}-${GOARCH_FLAG}.go
 
 prepare:
 	sh ./prepare/prepare_libs_${GOOS_FLAG}_${GOARCH_FLAG}.sh
 
 clean:
 	go clean
-	rm -rf libs/
-	rm ${BINARY_NAME}
+	rm -rf bin/
+
+.PHONY: prepare
