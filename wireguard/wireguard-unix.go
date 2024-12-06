@@ -64,6 +64,34 @@ func (wg Wireguard) add_address(interface_name string, address string) {
 	}
 }
 
+func (wg Wireguard) add_route(interface_name string, address string) {
+	var table = "51820"
+
+	if exec.Command("sudo", WG, "set", interface_name, "fwmark", table).Run() == nil {
+		fmt.Println("set fwmark")
+	}
+
+	if exec.Command("sudo", "ip", "-4", "rule", "add", "not", "fwmark", table, "table", table).Run() == nil {
+		fmt.Println("rule add not fwmark")
+
+	}
+
+	if exec.Command("sudo", "ip", "-4", "rule", "add", "table", "main", "suppress_prefixlength", "0").Run() == nil {
+		fmt.Println("add table main")
+	}
+
+	if exec.Command("sudo", "ip", "-4", "route", "add", address, "dev", interface_name, "table", table).Run() == nil {
+		fmt.Println("route add")
+	}
+
+	if exec.Command("sudo", "sysctl", "-q", "net.ipv4.conf.all.src_valid_mark=1").Run() == nil {
+		fmt.Println("sysctl")
+	}
+
+
+	fmt.Printf("+ Add %s route\n", address)
+}
+
 func (wg Wireguard) set_mtu(interface_name string, mtu string) {
 	var cmd = exec.Command("sudo", "ip", "link", "set", "mtu", mtu, "up", "dev", interface_name)
 	if err := cmd.Run(); err != nil {
@@ -82,7 +110,7 @@ func (wg Wireguard) turn_on(interface_name string) {
 	wg.set_mtu(interface_name, wg.mtu)
 	// Set dns
 	for _, aip := range strings.Split(wg.allowed_ip, " ") {
-		wg.add_address(interface_name, aip)
+		wg.add_route(interface_name, aip)
 	}
 }
 

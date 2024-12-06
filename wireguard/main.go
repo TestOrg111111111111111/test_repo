@@ -101,5 +101,5 @@ func main() {
 		connection = build_amneziawg()
 	}
 
-	test_connection(connection, "awg0")
+	test_connection(connection, interface_name)
 }
