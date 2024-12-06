@@ -2,12 +2,12 @@
    debug
 }
 
-abby.nocloud.today {
+<domain-name> {
     @cloakPath {
-        path /special-url
+        path <special-url>
     }
     handle @cloakPath {
-        reverse_proxy @cloakPath 127.0.0.1:8443
+        reverse_proxy @cloakPath 127.0.0.1:<caddy-server-port>
     }
     
     handle {

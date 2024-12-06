@@ -43,8 +43,12 @@ Below is a sample configuration for the Cloak server:
     "<user-UID>"
   ],
   "AdminUID": "<admin-UID>",
-  "RedirAddr": "<our-domain-name>",
-  "PrivateKey": "<your-private-key-here>",
+  "RedirAddr": "<domain-name>",
+  "PrivateKey": "<private-key>",
   "StreamTimeout": 300
 }
 ```
+
+Installation script: **install_script.sh**. It works in an interactive mode without having to enter params via cli keys.
+
+
