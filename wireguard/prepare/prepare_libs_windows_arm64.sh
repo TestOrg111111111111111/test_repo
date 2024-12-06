@@ -4,4 +4,4 @@ wireguard-windows/build.bat
 
 mkdir bin
 mkdir bin/libs
-cp -r wireguard-windows/arm64/ bin/libs/arm64/
+cp -r wireguard-windows/arm64/ bin/libs/
