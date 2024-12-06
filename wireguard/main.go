@@ -2,17 +2,17 @@ package main
 
 import (
 	"flag"
-	"os"
 	"log"
+	"os"
 )
 
-type ConnectionData struct{
-	configContent   string
-	interfaceName   string
-	address         string
-	dns             string
-	mtu             string
-	allowed_ip      string
+type ConnectionData struct {
+	configContent string
+	interfaceName string
+	address       string
+	dns           string
+	mtu           string
+	allowed_ip    string
 }
 
 const CONGIG_PATH_DEFAULT = "awg0.conf"
@@ -52,11 +52,13 @@ func main() {
 	flag.StringVar(&mode, "mode", MODE_DEFAULT, MODE_USAGE)
 
 	flag.Parse()
-	
+
 	data, err := os.ReadFile(config_path)
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	configContent := string(data)
-	connectionData := ConnectionData { configContent, interfaceName, address, dns, mtu, allowed_ip }
+	connectionData := ConnectionData{configContent, interfaceName, address, dns, mtu, allowed_ip}
 
 	switch mode {
 	case "yes":
@@ -69,9 +71,9 @@ func main() {
 	case "no":
 		switch connection_type {
 		case "amneziawg", "awg":
-			tunnelAmneziaWGOff(connectionData)
+			tunnelAmneziaWGOff(connectionData.interfaceName)
 		case "wireguard", "wg":
-			tunnelWireguardOff(connectionData)
+			tunnelWireguardOff(connectionData.interfaceName)
 		}
 	}
 }

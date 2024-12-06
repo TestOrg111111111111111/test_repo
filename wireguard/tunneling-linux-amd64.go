@@ -1,260 +1,194 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
 )
 
-const AWG = "./libs/awg"
-const AWG_QUICK = "./libs/awg-quick/linux.bash"
-const AWG_GO = "./libs/amneziawg-go"
+const AWG = "bin/libs/awg"
+const AWG_QUICK = "bin/libs/awg-quick/linux.bash"
+const AWG_GO = "bin/libs/amneziawg-go"
 const AWG_CONFIG_FOLDER = "/etc/amnezia/amneziawg/"
-
-func (wg AmneziaWG) run_interface(interface_name string) {
-	var cmd = exec.Command("sudo", AWG_GO, interface_name)
-
-	if err := cmd.Run(); err != nil {
-		fmt.Printf("Could not run AmneziaWG interface: %s\n", err)
-		wg.turn_off(interface_name)
-		os.Exit(1)
-	} else {
-		fmt.Printf("+ Ran AmneziaWG interface\n")
-	}
-}
-
-func (wg AmneziaWG) set_config(interface_name string) {
-	file_path := AWG_CONFIG_FOLDER + interface_name + ".conf"
-	file, err := os.OpenFile(file_path, os.O_WRONLY|os.O_CREATE, 0604)
-
-	if err != nil {
-		fmt.Printf("Could not configure AmneziaWG interface: %s\n", err)
-		wg.turn_off(interface_name)
-		os.Exit(1)
-	}
-
-	if _, err := file.WriteString(wg.awg_content); err != nil {
-		fmt.Printf("Could not configure AmneziaWG interface: %s\n", err)
-		wg.turn_off(interface_name)
-		os.Exit(1)
-	}
-
-	file.Close()
-	cmd := exec.Command("sudo", AWG, "setconf", interface_name, file_path)
-
-	if output, err := cmd.CombinedOutput(); err != nil {
-		fmt.Printf("Could not configure AmneziaWG interface: %s\n", err)
-		fmt.Printf("=========\n%s\n", string(output))
-		wg.turn_off(interface_name)
-		fmt.Printf("=========\n")
-		os.Exit(1)
-	}
-
-	fmt.Printf("+ Set config\n")
-}
-
-func (wg AmneziaWG) add_address(interface_name string, address string) {
-	var cmd = exec.Command("sudo", "ip", "-4", "address", "add", address, "dev", interface_name)
-
-	if err := cmd.Run(); err != nil {
-		fmt.Printf("Could not add address %s: %s\n", address, err)
-		wg.turn_off(interface_name)
-		os.Exit(1)
-	} else {
-		fmt.Printf("+ Add %s address\n", address)
-	}
-}
-
-func (wg AmneziaWG) add_route(interface_name string, address string) {
-	var table = "51820"
-
-	if exec.Command("sudo", AWG, "set", interface_name, "fwmark", table).Run() == nil {
-		fmt.Println("set fwmark")
-	}
-
-	if exec.Command("sudo", "ip", "-4", "rule", "add", "not", "fwmark", table, "table", table).Run() == nil {
-		fmt.Println("rule add not fwmark")
-
-	}
-
-	if exec.Command("sudo", "ip", "-4", "rule", "add", "table", "main", "suppress_prefixlength", "0").Run() == nil {
-		fmt.Println("add table main")
-	}
-
-	if exec.Command("sudo", "ip", "-4", "route", "add", address, "dev", interface_name, "table", table).Run() == nil {
-		fmt.Println("route add")
-	}
-
-	if exec.Command("sudo", "sysctl", "-q", "net.ipv4.conf.all.src_valid_mark=1").Run() == nil {
-		fmt.Println("sysctl")
-	}
-
-
-	fmt.Printf("+ Add %s route\n", address)
-}
-
-func (wg AmneziaWG) set_mtu(interface_name string, mtu string) {
-	var cmd = exec.Command("sudo", "ip", "link", "set", "mtu", mtu, "up", "dev", interface_name)
-
-	if err := cmd.Run(); err != nil {
-		fmt.Printf("Could not set up mtu %s: %s\n", mtu, err)
-		wg.turn_off(interface_name)
-		os.Exit(1)
-	} else {
-		fmt.Printf("+ Set %s mtu\n", mtu)
-	}
-}
-
-func (wg AmneziaWG) turn_on(interface_name string) {
-	wg.run_interface(interface_name)
-	wg.set_config(interface_name)
-	wg.add_address(interface_name, wg.address)
-	wg.set_mtu(interface_name, wg.mtu)
-	// Set dns
-	for _, aip := range strings.Split(wg.allowed_ip, " ") {
-		wg.add_route(interface_name, aip)
-	}
-}
-
-func (wg AmneziaWG) turn_off(interface_name string) {
-	var cmd = exec.Command("sudo", "ip", "link", "del", interface_name)
-	if output, err := cmd.CombinedOutput(); err != nil {
-		fmt.Printf("Could not remove AmneziaWG interface: %s\n", err)
-		fmt.Printf("Output: %s\n", string(output))
-		wg.turn_off(interface_name)
-		os.Exit(1)
-	} else {
-		fmt.Printf("+ Removed interface\n")
-	}
-}
-
-// ------------ TODO EDIT -----------------------
-
-package main
-
-import (
-	"fmt"
-	"os"
-	"os/exec"
-	"strings"
-)
-
 const WG = "./libs/wg"
 const WG_QUICK = "./libs/wg-quick/linux.bash"
 const WG_GO = "./libs/wireguard-go"
 const WG_CONFIG_FOLDER = "/etc/wireguard/"
 
-func (wg Wireguard) run_interface(interface_name string) {
-	var cmd = exec.Command("sudo", WG_GO, interface_name)
-	if err := cmd.Run(); err != nil {
-		fmt.Printf("Could not run Wireguard interface: %s\n", err)
-		wg.turn_off(interface_name)
-		os.Exit(1)
-	} else {
-		fmt.Printf("+ Ran Wireguard interface\n")
-	}
+func runWireguardInterface(interfaceName string) error {
+	var cmd = exec.Command("sudo", WG_GO, interfaceName)
+	return cmd.Run()
 }
 
-func (wg Wireguard) set_config(interface_name string) {
-	file_path := WG_CONFIG_FOLDER + interface_name + ".conf"
-	file, err := os.OpenFile(file_path, os.O_WRONLY|os.O_CREATE, 0644)
+func runAmneziaWGInterface(interfaceName string) error {
+	var cmd = exec.Command("sudo", AWG_GO, interfaceName)
+	return cmd.Run()
+}
+
+func setConfig(configContent string, interfaceName string, configFolder string, configScript string) error {
+	configPath := configFolder + interfaceName + ".conf"
+	file, err := os.OpenFile(configPath, os.O_WRONLY|os.O_CREATE, 0644)
 
 	if err != nil {
-		fmt.Printf("Could not configure Wireguard interface: %s\n", err)
-		wg.turn_off(interface_name)
-		os.Exit(1)
+		return err
 	}
 
-	if _, err := file.WriteString(wg.wg_content); err != nil {
-		fmt.Printf("Could not configure Wireguard interface: %s\n", err)
-		wg.turn_off(interface_name)
-		os.Exit(1)
+	if _, err := file.WriteString(configContent); err != nil {
+		return err
 	}
 
 	file.Close()
-	cmd := exec.Command("sudo", WG, "setconf", interface_name, file_path)
 
-	if output, err := cmd.CombinedOutput(); err != nil {
-		fmt.Printf("Could not configure Wireguard interface: %s\n", err)
-		fmt.Printf("=========\n%s\n", string(output))
-		wg.turn_off(interface_name)
-		fmt.Printf("=========\n")
-		os.Exit(1)
-	}
+	cmd := exec.Command("sudo", configScript, "setconf", interfaceName, configPath)
 
-	fmt.Printf("+ Set config\n")
-}
-
-func (wg Wireguard) add_address(interface_name string, address string) {
-	var cmd = exec.Command("sudo", "ip", "-4", "address", "add", address, "dev", interface_name)
 	if err := cmd.Run(); err != nil {
-		fmt.Printf("Could not add address %s: %s\n", address, err)
-		wg.turn_off(interface_name)
-		os.Exit(1)
-	} else {
-		fmt.Printf("+ Add %s address\n", address)
+		return err
 	}
+
+	return nil
 }
 
-func (wg Wireguard) add_route(interface_name string, address string) {
+func setWireguardConfig(configContent string, interfaceName string) error {
+	return setConfig(configContent, interfaceName, WG_CONFIG_FOLDER, WG)
+}
+
+func setAmneziaWGConfig(configContent string, interfaceName string) error {
+	return setConfig(configContent, interfaceName, AWG_CONFIG_FOLDER, AWG)
+}
+
+func addAddress(interfaceName string, address string) error {
+	var cmd = exec.Command("sudo", "ip", "-4", "address", "add", address, "dev", interfaceName)
+	return cmd.Run()
+}
+
+func setMtu(interfaceName string, mtu string) error {
+	var cmd = exec.Command("sudo", "ip", "link", "set", "mtu", mtu, "up", "dev", interfaceName)
+	return cmd.Run()
+}
+
+func addWireguardRoute(interfaceName string, address string) error {
 	var table = "51820"
 
-	if exec.Command("sudo", WG, "set", interface_name, "fwmark", table).Run() == nil {
-		fmt.Println("set fwmark")
+	if err := exec.Command("sudo", WG, "set", interfaceName, "fwmark", table).Run(); err != nil {
+		return err
 	}
 
-	if exec.Command("sudo", "ip", "-4", "rule", "add", "not", "fwmark", table, "table", table).Run() == nil {
-		fmt.Println("rule add not fwmark")
-
+	if err := exec.Command("sudo", "ip", "-4", "rule", "add", "not", "fwmark", table, "table", table).Run(); err != nil {
+		return err
 	}
 
-	if exec.Command("sudo", "ip", "-4", "rule", "add", "table", "main", "suppress_prefixlength", "0").Run() == nil {
-		fmt.Println("add table main")
+	if err := exec.Command("sudo", "ip", "-4", "rule", "add", "table", "main", "suppress_prefixlength", "0").Run(); err != nil {
+		return err
 	}
 
-	if exec.Command("sudo", "ip", "-4", "route", "add", address, "dev", interface_name, "table", table).Run() == nil {
-		fmt.Println("route add")
+	if err := exec.Command("sudo", "ip", "-4", "route", "add", address, "dev", interfaceName, "table", table).Run(); err != nil {
+		return err
 	}
 
-	if exec.Command("sudo", "sysctl", "-q", "net.ipv4.conf.all.src_valid_mark=1").Run() == nil {
-		fmt.Println("sysctl")
+	if err := exec.Command("sudo", "sysctl", "-q", "net.ipv4.conf.all.src_valid_mark=1").Run(); err != nil {
+		return err
 	}
 
-
-	fmt.Printf("+ Add %s route\n", address)
+	return nil
 }
 
-func (wg Wireguard) set_mtu(interface_name string, mtu string) {
-	var cmd = exec.Command("sudo", "ip", "link", "set", "mtu", mtu, "up", "dev", interface_name)
-	if err := cmd.Run(); err != nil {
-		fmt.Printf("Could not set up mtu %s: %s\n", mtu, err)
-		wg.turn_off(interface_name)
-		os.Exit(1)
+func tunnelWireguardOn(connectionData ConnectionData) {
+	if err := runWireguardInterface(connectionData.interfaceName); err != nil {
+		log.Fatalf("Wireguard interface run failed: %s\n", err)
 	} else {
-		fmt.Printf("+ Set %s mtu\n", mtu)
+		log.Println("Wireguard interface run succeed")
 	}
-}
 
-func (wg Wireguard) turn_on(interface_name string) {
-	wg.run_interface(interface_name)
-	wg.set_config(interface_name)
-	wg.add_address(interface_name, wg.address)
-	wg.set_mtu(interface_name, wg.mtu)
+	if err := setWireguardConfig(connectionData.configContent, connectionData.interfaceName); err != nil {
+		tunnelWireguardOff(connectionData.interfaceName)
+		log.Fatalf("Wireguard interface config failed: %s\n", err)
+	} else {
+		log.Println("Wireguard interface config succeed")
+	}
+
+	if err := addAddress(connectionData.interfaceName, connectionData.address); err != nil {
+		tunnelWireguardOff(connectionData.interfaceName)
+		log.Fatalf("Wireguard interface address addition failed: %s\n", err)
+	} else {
+		log.Println("Wireguard interface address addition succeed")
+	}
+
+	if err := setMtu(connectionData.interfaceName, connectionData.mtu); err != nil {
+		tunnelWireguardOff(connectionData.interfaceName)
+		log.Fatalf("Wireguard interface mtu set failed: %s\n", err)
+	} else {
+		log.Println("Wireguard interface mtu set succeed")
+	}
+
 	// Set dns
-	for _, aip := range strings.Split(wg.allowed_ip, " ") {
-		wg.add_route(interface_name, aip)
+
+	for _, aip := range strings.Split(connectionData.allowed_ip, " ") {
+		if err := addWireguardRoute(connectionData.interfaceName, aip); err != nil {
+			tunnelWireguardOff(connectionData.interfaceName)
+			log.Fatalf("Wireguard interface route %s failed: %s\n", aip, err)
+		} else {
+			log.Printf("Wireguard interface route %s succeed\n", aip)
+		}
 	}
 }
 
-func (wg Wireguard) turn_off(interface_name string) {
-	var cmd = exec.Command("sudo", "ip", "link", "del", interface_name)
+func tunnelWireguardOff(interfaceName string) {
+	var cmd = exec.Command("sudo", "ip", "link", "del", interfaceName)
+
 	if output, err := cmd.CombinedOutput(); err != nil {
-		fmt.Printf("Could not remove Wireguard interface: %s\n", err)
-		fmt.Printf("Output: %s\n", string(output))
-		wg.turn_off(interface_name)
-		os.Exit(1)
+		log.Fatal("Could not remove Wireguard interface:\n error: %s\n output: %s\n", err, output)
 	} else {
-		fmt.Printf("+ Removed interface\n")
+		log.Println("Removed Wireguard interface")
+	}
+}
+
+func tunnelAmneziaWGOn(connectionData ConnectionData) {
+	if err := runAmneziaWGInterface(connectionData.interfaceName); err != nil {
+		log.Fatalf("AmneziaWG interface run failed: %s\n", err)
+	} else {
+		log.Println("AmneziaWG interface run succeed")
+	}
+
+	if err := setAmneziaWGConfig(connectionData.configContent, connectionData.interfaceName); err != nil {
+		tunnelAmneziaWGOff(connectionData.interfaceName)
+		log.Fatalf("AmneziaWG interface config failed: %s\n", err)
+	} else {
+		log.Println("AmneziaWG interface config succeed")
+	}
+
+	if err := addAddress(connectionData.interfaceName, connectionData.address); err != nil {
+		tunnelAmneziaWGOff(connectionData.interfaceName)
+		log.Fatalf("AmneziaWG interface address addition failed: %s\n", err)
+	} else {
+		log.Println("AmneziaWG interface address addition succeed")
+	}
+
+	if err := setMtu(connectionData.interfaceName, connectionData.mtu); err != nil {
+		tunnelAmneziaWGOff(connectionData.interfaceName)
+		log.Fatalf("AmneziaWG interface mtu set failed: %s\n", err)
+	} else {
+		log.Println("AmneziaWG interface mtu set succeed")
+	}
+
+	// Set dns
+
+	for _, aip := range strings.Split(connectionData.allowed_ip, " ") {
+		if err := addWireguardRoute(connectionData.interfaceName, aip); err != nil {
+			tunnelWireguardOff(connectionData.interfaceName)
+			log.Fatalf("Wireguard interface route %s failed: %s\n", aip, err)
+		} else {
+			log.Printf("Wireguard interface route %s succeed\n", aip)
+		}
+	}
+}
+
+func tunnelAmneziaWGOff(interfaceName string) {
+	var cmd = exec.Command("sudo", "ip", "link", "del", interfaceName)
+
+	if output, err := cmd.CombinedOutput(); err != nil {
+		log.Fatal("Could not remove AmneziaWG interface:\n error: %s\n output: %s\n", err, output)
+	} else {
+		log.Println("Removed AmneziaWG interface")
 	}
 }

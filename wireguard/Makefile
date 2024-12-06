@@ -13,6 +13,7 @@ ifeq ($(OS), Windows_NT)
         endif
     endif
 else
+    UNAME_S := $(shell uname -s)
 	BINARY_NAME=wireguard-tunnel
 
     ifeq ($(UNAME_S), Linux)
