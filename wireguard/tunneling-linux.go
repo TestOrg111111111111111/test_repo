@@ -7,9 +7,9 @@ import (
 	"strings"
 )
 
-const AWG = "bin/libs/awg"
-const AWG_QUICK = "bin/libs/awg-quick/linux.bash"
-const AWG_GO = "bin/libs/amneziawg-go"
+const AWG = "./libs/awg"
+const AWG_QUICK = "./libs/awg-quick/linux.bash"
+const AWG_GO = "./libs/amneziawg-go"
 const AWG_CONFIG_FOLDER = "/etc/amnezia/amneziawg/"
 const WG = "./libs/wg"
 const WG_QUICK = "./libs/wg-quick/linux.bash"
@@ -71,6 +71,32 @@ func addWireguardRoute(interfaceName string, address string) error {
 	var table = "51820"
 
 	if err := exec.Command("sudo", WG, "set", interfaceName, "fwmark", table).Run(); err != nil {
+		return err
+	}
+
+	if err := exec.Command("sudo", "ip", "-4", "rule", "add", "not", "fwmark", table, "table", table).Run(); err != nil {
+		return err
+	}
+
+	if err := exec.Command("sudo", "ip", "-4", "rule", "add", "table", "main", "suppress_prefixlength", "0").Run(); err != nil {
+		return err
+	}
+
+	if err := exec.Command("sudo", "ip", "-4", "route", "add", address, "dev", interfaceName, "table", table).Run(); err != nil {
+		return err
+	}
+
+	if err := exec.Command("sudo", "sysctl", "-q", "net.ipv4.conf.all.src_valid_mark=1").Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func addAmneziaWGRoute(interfaceName string, address string) error {
+	var table = "51820"
+
+	if err := exec.Command("sudo", AWG, "set", interfaceName, "fwmark", table).Run(); err != nil {
 		return err
 	}
 
@@ -174,11 +200,11 @@ func tunnelAmneziaWGOn(connectionData ConnectionData) {
 	// Set dns
 
 	for _, aip := range strings.Split(connectionData.allowed_ip, " ") {
-		if err := addWireguardRoute(connectionData.interfaceName, aip); err != nil {
+		if err := addAmneziaWGRoute(connectionData.interfaceName, aip); err != nil {
 			tunnelWireguardOff(connectionData.interfaceName)
-			log.Fatalf("Wireguard interface route %s failed: %s\n", aip, err)
+			log.Fatalf("AmneziaWG interface route %s failed: %s\n", aip, err)
 		} else {
-			log.Printf("Wireguard interface route %s succeed\n", aip)
+			log.Printf("AmneziaWG interface route %s succeed\n", aip)
 		}
 	}
 }
