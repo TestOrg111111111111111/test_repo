@@ -39,7 +39,7 @@ build: prepare
 	GOARCH=${GOARCH_FLAG} GOOS=${GOOS_FLAG} go build -o ${BINARY_NAME} main.go amneziawg-${GOOS_FLAG}-${GOARCH_FLAG}.go wireguard-${GOOS_FLAG}-${GOARCH_FLAG}.go
 
 prepare:
-	sh ./prepare_libs_${GOOS_FLAG}_${GOARCH_FLAG}.sh
+	sh ./prepare/prepare_libs_${GOOS_FLAG}_${GOARCH_FLAG}.sh
 
 clean:
 	go clean
