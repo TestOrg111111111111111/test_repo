@@ -43,7 +43,7 @@ Below is a sample configuration for the Cloak server:
     "<user-UID>"
   ],
   "AdminUID": "<admin-UID>",
-  "RedirAddr": "google.com",
+  "RedirAddr": "<our-domain-name>",
   "PrivateKey": "<your-private-key-here>",
   "StreamTimeout": 300
 }
