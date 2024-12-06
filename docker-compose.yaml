@@ -5,12 +5,8 @@ services:
     image: caddy:latest
     container_name: caddy
     network_mode: "host"
-    environment:
-      - CADDY_LOCALHOST_CERT=true
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile  
-      - caddy_data:/data  # Caddy will store SSL certificates here
-      - caddy_config:/config  # Stores other Caddy configuration
     restart: unless-stopped
 
 
@@ -21,32 +17,3 @@ services:
     network_mode: "host"
     volumes:
       - ./cloak-server.conf:/app/config.json
-
-#  swgp-server:
-#    container_name: swgp-server
-#    image: vnxme/swgp-go:latest
-#    network_mode: "host"
-#    restart: unless-stopped
-#    volumes:
-#      - ./server.json:/etc/swgp-go/config.json
-
-
-#  wireguard:
-#    image: masipcat/wireguard-go:latest
-#    container_name: wireguard-server
-#    network_mode: "host"
-#    cap_add:
-#      - NET_ADMIN
-#    volumes:
-#     - /dev/net/tun:/dev/net/tun
-#     - ./wireguard:/etc/wireguard
-#    environment:
-#     - WG_COLOR_MODE=always
-#     - LOG_LEVEL=info
-#    restart: always
-
-
-volumes:
-  caddy_data:
-  caddy_config:
-
