@@ -41,6 +41,8 @@ const MTU_DEFAULT = "1420"
 const MTU_USAGE = "Tunnel MTU"
 const ALLOWED_IP_DEFAULT = "0.0.0.0/0"
 const ALLOWED_IP_USAGE = "Interface peer allowed ips"
+const MODE_DEFAULT = "yes"
+const MODE_USAGE = "Turn on/Turn of (yes/no)"
 
 var config_path string
 var connection_type string
@@ -49,11 +51,7 @@ var address string
 var dns string
 var mtu string
 var allowed_ip string
-
-func test_connection(conn Connection, name string) {
-	conn.turn_on(name)
-	// conn.turn_off(name)
-}
+var mode string
 
 func build_wireguard() Wireguard {
 	data, err := os.ReadFile(config_path)
@@ -89,6 +87,7 @@ func main() {
 	flag.StringVar(&dns, "dns", DNS_DEFAULT, DNS_USAGE)
 	flag.StringVar(&mtu, "mtu", MTU_DEFAULT, MTU_USAGE)
 	flag.StringVar(&allowed_ip, "ips", ALLOWED_IP_DEFAULT, ALLOWED_IP_USAGE)
+	flag.StringVar(&mode, "mode", MODE_DEFAULT, MODE_USAGE)
 	flag.Parse()
 
 	var connection Connection
@@ -101,5 +100,10 @@ func main() {
 		connection = build_amneziawg()
 	}
 
-	test_connection(connection, interface_name)
+	switch mode {
+	case "yes":
+		connection.turn_on(interface_name)
+	case "no":
+		connection.turn_off(interface_name)
+	}
 }

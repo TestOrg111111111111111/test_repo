@@ -10,3 +10,6 @@
 [submodule "wireguard/wireguard-tools"]
 	path = wireguard/wireguard-tools
 	url = https://github.com/WireGuard/wireguard-tools
+[submodule "wireguard/wireguard-windows"]
+	path = wireguard/wireguard-windows
+	url = https://github.com/WireGuard/wireguard-windows
