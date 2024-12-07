@@ -23,4 +23,5 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }} 
           image-name: cloak-server-test
           dockerfile: Dockerfile-cloak-server
-          extract-git-tag: true
+          image-tag: v1.0.0  
+            #extract-git-tag: true
