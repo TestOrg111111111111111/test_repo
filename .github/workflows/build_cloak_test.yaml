@@ -1,0 +1,25 @@
+permissions:
+  packages: write
+  contents: read
+
+name: Build and Push Docker Image(TEST)
+on:
+  push:
+    branches:
+      - main    
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build and Publish latest Docker image
+        uses: DrSkunk/gp-docker-action@1.1.9
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }} 
+          image-name: cloak-server
+          dockerfile: Dockerfile-cloak-server
