@@ -22,7 +22,7 @@ jobs:
           git clone https://github.com/cbeuw/Cloak.git
           cd Cloak
           CLOAK_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
-          echo "CLOAK_VERSION=$VERSION"    
+          echo "CLOAK_VERSION=$CLOAK_VERSION"
 
       - name: Build and Publish latest Docker image
         uses: DrSkunk/gp-docker-action@1.1.9
