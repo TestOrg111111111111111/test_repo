@@ -36,16 +36,19 @@ else
     endif
 endif
 
-all: build
+all: bin/wireguard-tunnel-linux-amd64 bin/wireguard-tunnel-linux-arm64
 
-build:
-	GOARCH=${GOARCH_FLAG} GOOS=${GOOS_FLAG} go build -o bin/${BINARY_NAME} main.go tunneling-${GOOS_FLAG}.go
+bin/wireguard-tunnel-linux-amd64:
+	GOARCH=amd64 GOOS=linux go build -o bin/wireguard-tunnel-linux-amd64 main.go
 
-prepare:
-	sh ./prepare/prepare_libs_${GOOS_FLAG}_${GOARCH_FLAG}.sh
+bin/wireguard-tunnel-linux-arm64:
+	GOARCH=arm64 GOOS=linux go build -o bin/wireguard-tunnel-linux-arm64 main.go
+
+build: 
+	GOARCH=${GOARCH_FLAG} GOOS=${GOOS_FLAG} go build -o bin/${BINARY_NAME} main.go
 
 clean:
 	go clean
 	rm -rf bin/
 
-.PHONY: prepare
+.PHONY: all build clean
