@@ -21,8 +21,9 @@ jobs:
         run: |
           git clone https://github.com/cbeuw/Cloak.git
           cd Cloak
-          CLOAK_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
-          echo "CLOAK_VERSION=$CLOAK_VERSION"
+          VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo "CLOAK_VERSION=$VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Build and Publish latest Docker image
         uses: DrSkunk/gp-docker-action@1.1.9
@@ -30,5 +31,5 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }} 
           image-name: cloak-server-test
           dockerfile: Dockerfile-cloak-server
-          image-tag: $CLOAK_VERSION  
+          image-tag: ${{ env.VERSION }}  
             #extract-git-tag: true
