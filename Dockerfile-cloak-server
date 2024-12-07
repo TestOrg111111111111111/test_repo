@@ -5,6 +5,7 @@ WORKDIR /opt
 RUN apk add --no-cache git make
 
 RUN git clone https://github.com/cbeuw/Cloak.git
+RUN git describe --tags $(git rev-list --tags --max-count=1) > version.txt
 
 # Set up Go module and add dependencies
 WORKDIR /opt/Cloak
@@ -25,3 +26,5 @@ COPY --from=build /opt/Cloak/build/ck-server /app/ck-server
 
 
 LABEL org.opencontainers.image.source=https://github.com/DobbyVPN/dobbyvpn-server
+LABEL org.opencontainers.image.version=$(cat version.txt)
+
