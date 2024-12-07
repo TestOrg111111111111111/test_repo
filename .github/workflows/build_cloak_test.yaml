@@ -17,11 +17,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Finding Cloak version
+        run: |
+          git clone https://github.com/cbeuw/Cloak.git
+          cd Cloak
+          CLOAK_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo "CLOAK_VERSION=$VERSION"    
+
       - name: Build and Publish latest Docker image
         uses: DrSkunk/gp-docker-action@1.1.9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }} 
           image-name: cloak-server-test
           dockerfile: Dockerfile-cloak-server
-          image-tag: v1.0.0  
+          image-tag: $CLOAK_VERSION  
             #extract-git-tag: true
