@@ -21,5 +21,6 @@ jobs:
         uses: DrSkunk/gp-docker-action@1.1.9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }} 
-          image-name: cloak-server
+          image-name: cloak-server-test
           dockerfile: Dockerfile-cloak-server
+          extract-git-tag: true
