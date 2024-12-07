@@ -38,7 +38,7 @@ endif
 
 all: build
 
-build: prepare
+build:
 	GOARCH=${GOARCH_FLAG} GOOS=${GOOS_FLAG} go build -o bin/${BINARY_NAME} main.go tunneling-${GOOS_FLAG}.go
 
 prepare:
