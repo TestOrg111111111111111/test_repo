@@ -104,11 +104,11 @@ function readArgs {
         exit 1
     fi
 
-    KEYPAIRS=$(bin/ck-server -key)
+    KEYPAIRS=$(/bin/ck-server -key)
     CLOAK_PRIVATE_KEY=$(echo $KEYPAIRS | cut -d" " -f13)
     CLOAK_PUBLIC_KEY=$(echo $KEYPAIRS | cut -d" " -f5)
-    USER_UID=$(bin/ck-server -uid | cut -d" " -f4)
-    ADMIN_UID=$(bin/ck-server -uid | cut -d" " -f4)
+    USER_UID=$(/bin/ck-server -uid | cut -d" " -f4)
+    ADMIN_UID=$(/bin/ck-server -uid | cut -d" " -f4)
 }
 
 function main {
