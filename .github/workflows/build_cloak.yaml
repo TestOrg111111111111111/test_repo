@@ -4,10 +4,11 @@ permissions:
 
 name: Build and Push Docker Image(NEW)
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
+  
 
 jobs:
   build-and-push:
@@ -17,11 +18,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Finding Cloak version
+      - name: Setting Cloak version
         run: |
           git clone https://github.com/cbeuw/Cloak.git
           cd Cloak
           VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+          cd ..
+          git clone https://github.com/DobbyVPN/dobbyvpn-server.git
+          cd dobbyvpn-server
+          TMP=$(git describe --tags $(git rev-list --tags --max-count=1))
+          LAST_NUM_str=`echo "$TMP" | grep -o '[0-9]\+$'`
+          num=$(expr $LAST_NUM_str + 0)
+          let "num=$num+1"
+          LAST_NUM_str=$(expr $num + 0)
+          VERSION=$VERSION'.'$LAST_NUM_str
           echo "CLOAK_VERSION=$VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
