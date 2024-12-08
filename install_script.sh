@@ -24,14 +24,18 @@ function install_ck_server {
 
 
 function generate_url {
-     echo `head /dev/urandom | tr -dc A-Za-z0-9 | head -c40`
+    echo `head /dev/urandom | tr -dc A-Za-z0-9 | head -c40`
 }
 
 
 function run_ss {
     # Accepts 2 args: $1 - api-port, $2 - keys-port
-    echo "Outline server runninng..."    
-    ./install_server.sh --api-port $1 --keys-port $2
+    echo "Outline server runninng..."   
+    tmp_output=$(mktemp) 
+    ./install_server.sh --api-port $1 --keys-port $2 | tee "$tmp_output"
+    local result=$(grep -oE '\{"apiUrl":".*","certSha256":".*"\}' "$tmp_output")
+    rm -f "$tmp_output"
+    echo "$result"
 }
 
 function replace_caddy_holders {
@@ -116,7 +120,7 @@ function main {
 
     install_docker
     install_ss
-    run_ss $OUTLINE_API_PORT $OUTLINE_KEYS_PORT
+    apiUrlOutline=$(run_ss $OUTLINE_API_PORT $OUTLINE_KEYS_PORT)
 
     URL=$(generate_url)
     replace_caddy_holders $DOMAIN_NAME $URL $CLOAK_PORT
@@ -126,6 +130,7 @@ function main {
 
     filename="creds.txt"
     declare -A array_creds
+    array_creds["Outline"]=$apiUrlOutline
     array_creds["Special-url"]=$URL
     array_creds["Cloak-public-key"]=$CLOAK_PUBLIC_KEY
     array_creds["Cloak-private-key"]=$CLOAK_PRIVATE_KEY
