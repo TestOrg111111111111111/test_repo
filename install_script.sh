@@ -8,7 +8,7 @@ function install_docker {
 
 function install_ss {
     echo "Outline installation..."	
-    if ! [ -f "$file" ]
+    if ! [ -f "install_server.sh" ]
     then
         wget  https://raw.githubusercontent.com/Jigsaw-Code/outline-apps/master/server_manager/install_scripts/install_server.sh
         chmod u+x ./install_server.sh
@@ -36,9 +36,9 @@ function run_ss {
 
 function replace_caddy_holders {
     # Accepts 3 args: $1 - domain name, $2 - secret-url, $3 - cloak-server port
-    sed -i "s/<domain-name>/$1/g" ./Caddyfile
-    sed -i "s/<special-url>/$2/g" ./Caddyfile
-    sed -i "s/<cloak-server-port>/$3/g" ./Caddyfile
+    sed -i "s/<domain-name>/$1/g" Caddyfile
+    sed -i "s/<special-url>/$2/g" Caddyfile
+    sed -i "s/<cloak-server-port>/$3/g" Caddyfile
 }
 
 function replace_cloak_holders {
@@ -50,13 +50,13 @@ function replace_cloak_holders {
     # $5 - domain-name (for RedirAddr)
     # $6 - cloak private key
     
-    cp ./cloak-server-template.conf ./cloak-server.conf
-    sed -i "s/<keys-port>/$1/g" ./cloak-server.conf
-    sed -i "s/<cloak-server-port>/$2/g" ./cloak-server.conf
-    sed -i "s/<user-UID>/$3/g" ./cloak-server.conf
-    sed -i "s/<admin-UID>/$4/g" ./cloak-server.conf
-    sed -i "s/<domain-name>/$5/g" ./cloak-server.conf
-    sed -i "s/<cloak-private-key>/$6/g" ./cloak-server.conf
+    cp cloak-server-template.conf cloak-server.conf
+    sed -i "s/<keys-port>/$1/g" cloak-server.conf
+    sed -i "s/<cloak-server-port>/$2/g" cloak-server.conf
+    sed -i "s/<user-UID>/$3/g" cloak-server.conf
+    sed -i "s/<admin-UID>/$4/g" cloak-server.conf
+    sed -i "s/<domain-name>/$5/g" cloak-server.conf
+    sed -i "s/<cloak-private-key>/$6/g" cloak-server.conf
 }
 
 function save_credentials {
@@ -124,7 +124,7 @@ function main {
     replace_caddy_holders $DOMAIN_NAME $URL $CLOAK_PORT
     replace_cloak_holders $OUTLINE_KEYS_PORT $CLOAK_PORT $USER_UID $ADMIN_UID $DOMAIN_NAME $CLOAK_PRIVATE_KEY
 
-    docker-compose -f ./docker-compose.yaml up -d
+    docker-compose -f docker-compose.yaml up -d
 
     filename="creds.txt"
     array_creds["Special-url"]=$URL
@@ -132,6 +132,11 @@ function main {
     array_creds["Cloak-private-key"]=$CLOAK_PRIVATE_KEY
     array_creds["User-uid"]=$USER_UID
     array_creds["Admin-uid"]=$ADMIN_UID
+
+    for key in "${!array[@]}"; do
+        echo "$key => ${array[$key]}"
+    done
+
     save_credentials $filename $array_creds
 
     echo "All credentials are saved in $filename"
