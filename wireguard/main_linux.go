@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -13,6 +14,7 @@ import (
 	"github.com/amnezia-vpn/amneziawg-go/device"
 	"github.com/amnezia-vpn/amneziawg-go/ipc"
 	"github.com/amnezia-vpn/amneziawg-go/tun"
+	"github.com/vishvananda/netlink"
 )
 
 func configureAmneziaWG(device *device.Device, configPath string) error {
@@ -25,8 +27,19 @@ func configureAmneziaWG(device *device.Device, configPath string) error {
 }
 
 func addAddress(interfaceName string, address string) error {
-	var cmd = exec.Command("sudo", "ip", "-4", "address", "add", address, "dev", interfaceName)
-	return cmd.Run()
+	link, err := netlink.LinkByName(interfaceName)
+	if err != nil {
+		return err
+	}
+
+	addr, err := netlink.ParseAddr(address)
+	if err != nil {
+		return err
+	}
+
+	return netlink.AddrAdd(link, addr)
+	// var cmd = exec.Command("sudo", "ip", "-4", "address", "add", address, "dev", interfaceName)
+	// return cmd.Run()
 }
 
 func setMtu(interfaceName string, mtu string) error {
@@ -35,26 +48,44 @@ func setMtu(interfaceName string, mtu string) error {
 }
 
 func addAmneziaWGRoute(interfaceName string, address string) error {
-	var table = "51820"
+	var table = 51820
+	var tableString = "51820"
 
-	// FIXME
-	if err := exec.Command("sudo", "awg", "set", interfaceName, "fwmark", table).Run(); err != nil {
+	// sudo awg set <interfaceName> fwmark <table>
+
+	// sudo ip rule add not fwmark <table> table <table>
+	if err := exec.Command("sudo", "ip", "rule", "add", "not", "fwmark", tableString, "table", tableString).Run(); err != nil {
+		fmt.Println("#2")
 		return err
 	}
 
-	if err := exec.Command("sudo", "ip", "-4", "rule", "add", "not", "fwmark", table, "table", table).Run(); err != nil {
+	// sudo ip rule add table main suppress_prefixlength 0
+	if err := exec.Command("sudo", "ip", "rule", "add", "table", "main", "suppress_prefixlength", "0").Run(); err != nil {
+		fmt.Println("#3")
 		return err
 	}
 
-	if err := exec.Command("sudo", "ip", "-4", "rule", "add", "table", "main", "suppress_prefixlength", "0").Run(); err != nil {
+	// sudo ip route add address dev <interfaceName> table <table>
+	link, err := netlink.LinkByName(interfaceName)
+	if err != nil {
 		return err
 	}
 
-	if err := exec.Command("sudo", "ip", "-4", "route", "add", address, "dev", interfaceName, "table", table).Run(); err != nil {
+	_, dst, err := net.ParseCIDR(address)
+	if err != nil {
 		return err
 	}
 
+	route := netlink.Route{LinkIndex: link.Attrs().Index, Dst: dst, Table: table}
+
+	if err := netlink.RouteAdd(&route); err != nil {
+		fmt.Println("#4")
+		return err
+	}
+
+	// sudo sysctl -q net.ipv4.conf.all.src_valid_mark=1
 	if err := exec.Command("sudo", "sysctl", "-q", "net.ipv4.conf.all.src_valid_mark=1").Run(); err != nil {
+		fmt.Println("#5")
 		return err
 	}
 
