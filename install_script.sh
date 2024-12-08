@@ -86,9 +86,9 @@ function save_credentials {
     # fi
 
 
-   for key in "${!array[@]}"; do
-    echo "$key => ${array[$key]}"
-    echo "$key => ${array[$key]}" >> "$file"
+    for key in "${!array[@]}"; do
+        echo "$key => ${array[$key]}"
+        echo "$key => ${array[$key]}" >> "$file"
    done
 }
 
@@ -121,6 +121,7 @@ function main {
     run_ss $OUTLINE_API_PORT $OUTLINE_KEYS_PORT
 
     URL=$(generate_url)
+    echo "GenURL=$URL"
     replace_caddy_holders $DOMAIN_NAME $URL $CLOAK_PORT
     replace_cloak_holders $OUTLINE_KEYS_PORT $CLOAK_PORT $USER_UID $ADMIN_UID $DOMAIN_NAME $CLOAK_PRIVATE_KEY
 
@@ -133,8 +134,8 @@ function main {
     array_creds["User-uid"]=$USER_UID
     array_creds["Admin-uid"]=$ADMIN_UID
 
-    for key in "${!array[@]}"; do
-        echo "$key => ${array[$key]}"
+    for key in "${!array_creds[@]}"; do
+        echo "$key => ${array_creds[$key]}"
     done
 
     save_credentials $filename $array_creds
