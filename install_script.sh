@@ -36,7 +36,8 @@ function run_ss {
 
 function replace_caddy_holders {
     # Accepts 3 args: $1 - domain name, $2 - secret-url, $3 - cloak-server port
-    cp Caddyfile-template Caddyfile
+    rm -rf Caddyfile
+    cp "Caddyfile-template" "Caddyfile"
     sed -i "s/<domain-name>/$1/g" Caddyfile
     sed -i "s/<special-url>/$2/g" Caddyfile
     sed -i "s/<cloak-server-port>/$3/g" Caddyfile
@@ -51,7 +52,8 @@ function replace_cloak_holders {
     # $5 - domain-name (for RedirAddr)
     # $6 - cloak private key
     
-    cp cloak-server-template.conf cloak-server.conf
+    rm -rf cloak-server.conf
+    cp "cloak-server-template.conf" "cloak-server.conf"
     sed -i "s/<keys-port>/$1/g" cloak-server.conf
     sed -i "s/<cloak-server-port>/$2/g" cloak-server.conf
     sed -i "s/<user-UID>/$3/g" cloak-server.conf
@@ -111,19 +113,18 @@ function main {
     install_ck_server
     readArgs	
 
-    declare -A array_creds
     install_docker
     install_ss
     run_ss $OUTLINE_API_PORT $OUTLINE_KEYS_PORT
 
     URL=$(generate_url)
-    echo "GenURL=$URL"
     replace_caddy_holders $DOMAIN_NAME $URL $CLOAK_PORT
     replace_cloak_holders $OUTLINE_KEYS_PORT $CLOAK_PORT $USER_UID $ADMIN_UID $DOMAIN_NAME $CLOAK_PRIVATE_KEY
 
     docker-compose -f docker-compose.yaml up -d
 
     filename="creds.txt"
+    declare -A array_creds
     array_creds["Special-url"]=$URL
     array_creds["Cloak-public-key"]=$CLOAK_PUBLIC_KEY
     array_creds["Cloak-private-key"]=$CLOAK_PRIVATE_KEY
