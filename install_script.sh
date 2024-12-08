@@ -112,6 +112,7 @@ function readArgs {
 
 function main {
 
+    install_ck_server
     readArgs	
 
     declare -A array_creds
