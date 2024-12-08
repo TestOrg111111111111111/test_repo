@@ -12,7 +12,7 @@ ifeq ($(OS), Windows_NT)
 		endif
 	endif
 
-	BUILD_TARGET=bin/wireguard-tunnel-${GOOS_FLAG}-${GOARCH_FLAG}.exe
+	BUILD_TARGET=bin/amneziawg-tunnel-${GOOS_FLAG}-${GOARCH_FLAG}.exe
 else
 	UNAME_S := $(shell uname -s)
 
@@ -35,31 +35,31 @@ else
 		GOARCH_FLAG=arm64
 	endif
 
-	BUILD_TARGET=bin/wireguard-tunnel-${GOOS_FLAG}-${GOARCH_FLAG}
+	BUILD_TARGET=bin/amneziawg-tunnel-${GOOS_FLAG}-${GOARCH_FLAG}
 endif
 
 all: build
 
-bin/wireguard-tunnel-linux-amd64:
-	GOARCH=amd64 GOOS=linux go build -o bin/wireguard-tunnel-linux-amd64 main.go
+bin/amneziawg-tunnel-linux-amd64:
+	GOARCH=amd64 GOOS=linux go build -o bin/amneziawg-tunnel-linux-amd64 main.go
 
-bin/wireguard-tunnel-linux-arm64:
-	GOARCH=arm64 GOOS=linux go build -o bin/wireguard-tunnel-linux-arm64 main.go
+bin/amneziawg-tunnel-linux-arm64:
+	GOARCH=arm64 GOOS=linux go build -o bin/amneziawg-tunnel-linux-arm64 main.go
 
-bin/wireguard-tunnel-windows-amd64.exe:
+bin/amneziawg-tunnel-windows-amd64.exe:
 	mkdir bin/
 	cp wintun/bin/amd64/wintun.dll bin/
-	GOARCH=amd64 GOOS=windows go build -o bin/wireguard-tunnel-windows-amd64.exe main_windows.go
+	GOARCH=amd64 GOOS=windows go build -o bin/amneziawg-tunnel-windows-amd64.exe main_windows.go
 
-bin/wireguard-tunnel-windows-arm64.exe:
+bin/amneziawg-tunnel-windows-arm64.exe:
 	mkdir bin/
 	cp wintun/bin/arm64/wintun.dll bin/
-	GOARCH=arm64 GOOS=windows go build -o bin/wireguard-tunnel-windows-arm64.exe main_windows.go
+	GOARCH=arm64 GOOS=windows go build -o bin/amneziawg-tunnel-windows-arm64.exe main_windows.go
 
-bin/wireguard-tunnel-windows-x86.exe:
+bin/amneziawg-tunnel-windows-x86.exe:
 	mkdir bin/
 	cp wintun/bin/x86/wintun.dll bin/
-	GOARCH=x86 GOOS=windows go build -o bin/wireguard-tunnel-windows-x86.exe main_windows.go
+	GOARCH=x86 GOOS=windows go build -o bin/amneziawg-tunnel-windows-x86.exe main_windows.go
 
 build: ${BUILD_TARGET}
 
