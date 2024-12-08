@@ -37,9 +37,9 @@ function run_ss {
 
 function replace_caddy_holders {
     # Accepts 3 args: $1 - domain name, $2 - secret-url, $3 - cloak-server port
-    sed -i "s/<domain-name>/$1/g" ./dobbyvpn-server/Caddyfile
-    sed -i "s/<special-url>/$2/g" ./dobbyvpn-server/Caddyfile
-    sed -i "s/<cloak-server-port>/$3/g" ./dobbyvpn-server/Caddyfile
+    sed -i "s/<domain-name>/$1/g" ./Caddyfile
+    sed -i "s/<special-url>/$2/g" ./Caddyfile
+    sed -i "s/<cloak-server-port>/$3/g" ./Caddyfile
 }
 
 function replace_cloak_holders {
@@ -51,13 +51,13 @@ function replace_cloak_holders {
     # $5 - domain-name (for RedirAddr)
     # $6 - cloak private key
     
-    cp ./dobbyvpn-server/cloak-server-template.conf ./dobbyvpn-server/cloak-server.conf
-    sed -i "s/<keys-port>/$1/g" ./dobbyvpn-server/cloak-server.conf
-    sed -i "s/<cloak-server-port>/$2/g" ./dobbyvpn-server/cloak-server.conf
-    sed -i "s/<user-UID>/$3/g" ./dobbyvpn-server/cloak-server.conf
-    sed -i "s/<admin-UID>/$4/g" ./dobbyvpn-server/cloak-server.conf
-    sed -i "s/<domain-name>/$5/g" ./dobbyvpn-server/cloak-server.conf
-    sed -i "s/<cloak-private-key>/$6/g" ./dobbyvpn-server/cloak-server.conf
+    cp ./cloak-server-template.conf ./cloak-server.conf
+    sed -i "s/<keys-port>/$1/g" ./cloak-server.conf
+    sed -i "s/<cloak-server-port>/$2/g" ./cloak-server.conf
+    sed -i "s/<user-UID>/$3/g" ./cloak-server.conf
+    sed -i "s/<admin-UID>/$4/g" ./cloak-server.conf
+    sed -i "s/<domain-name>/$5/g" ./cloak-server.conf
+    sed -i "s/<cloak-private-key>/$6/g" ./cloak-server.conf
 }
 
 function save_credentials {
@@ -68,26 +68,27 @@ function save_credentials {
     local array=$2
 
     echo "Saving credentials"
-    if [ -e "$file" ]; then
-        echo "$file already exists."
-        read -e -p "Do you want to override it?(Y/n): " choice
-        case "$choice" in
-	        y|Y)
-                rm $file
-                for key in "${!array[@]}"; do
-                    echo "$key => ${array[$key]}" >> "$file"
-                done
-                return
-       	        ;;
-	        n|N)
-                return
-    	        ;;
-        esac	 	     
+    # if [ -e "$file" ]; then
+    #     echo "$file already exists."
+    #     read -e -p "Do you want to override it?(Y/n): " choice
+    #     case "$choice" in
+	#         y|Y)
+    #             rm $file
+    #             for key in "${!array[@]}"; do
+    #                 echo "$key => ${array[$key]}" >> "$file"
+    #             done
+    #             return
+    #    	        ;;
+	#         n|N)
+    #             return
+    # 	        ;;
+    #     esac	 	     
 	     
-   fi
+    # fi
 
 
    for key in "${!array[@]}"; do
+    echo "$key => ${array[$key]}"
     echo "$key => ${array[$key]}" >> "$file"
    done
 }
@@ -125,7 +126,7 @@ function main {
     replace_caddy_holders $DOMAIN_NAME $URL $CLOAK_PORT
     replace_cloak_holders $OUTLINE_KEYS_PORT $CLOAK_PORT $USER_UID $ADMIN_UID $DOMAIN_NAME $CLOAK_PRIVATE_KEY
 
-    docker-compose -f ./dobbyvpn-server/docker-compose.yaml up -d
+    docker-compose -f ./docker-compose.yaml up -d
 
     filename="creds.txt"
     array_creds["Special-url"]=$URL
