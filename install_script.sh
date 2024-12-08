@@ -17,9 +17,11 @@ function install_ss {
 
 function install_ck_server {
     # It needs for key generation in system
-    wget https://github.com/cbeuw/Cloak/releases/download/v2.7.0/ck-server-linux-amd64-v2.7.0 -O ck-server
-    chmod +x ck-server
-    mv ck-server /bin/ck-server # sudo permissions!
+    if ! which /bin/ck-server > /dev/null; then
+        wget https://github.com/cbeuw/Cloak/releases/download/v2.7.0/ck-server-linux-amd64-v2.7.0 -O ck-server
+        chmod +x ck-server
+        mv ck-server /bin/ck-server # sudo permissions!
+    fi
 }
 
 
@@ -31,11 +33,7 @@ function generate_url {
 function run_ss {
     # Accepts 2 args: $1 - api-port, $2 - keys-port
     echo "Outline server runninng..."   
-    tmp_output=$(mktemp) 
-    ./install_server.sh --api-port $1 --keys-port $2 | tee "$tmp_output"
-    local result=$(grep -oE '\{"apiUrl":".*","certSha256":".*"\}' "$tmp_output")
-    rm -f "$tmp_output"
-    echo "$result"
+    ./install_server.sh --api-port $1 --keys-port $2 
 }
 
 function replace_caddy_holders {
@@ -120,7 +118,7 @@ function main {
 
     install_docker
     install_ss
-    apiUrlOutline=$(run_ss $OUTLINE_API_PORT $OUTLINE_KEYS_PORT)
+    run_ss $OUTLINE_API_PORT $OUTLINE_KEYS_PORT
 
     URL=$(generate_url)
     replace_caddy_holders $DOMAIN_NAME $URL $CLOAK_PORT
@@ -130,7 +128,6 @@ function main {
 
     filename="creds.txt"
     declare -A array_creds
-    array_creds["Outline"]=$apiUrlOutline
     array_creds["Special-url"]=$URL
     array_creds["Cloak-public-key"]=$CLOAK_PUBLIC_KEY
     array_creds["Cloak-private-key"]=$CLOAK_PRIVATE_KEY
