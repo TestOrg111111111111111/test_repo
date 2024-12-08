@@ -62,34 +62,29 @@ function replace_cloak_holders {
 function save_credentials {
    # Function saves sensitive data to file
    # $1 - filename
-   # $2 - associative array
-    local file=$1
-    local array=$2
 
     echo "Saving credentials"
-    # if [ -e "$file" ]; then
-    #     echo "$file already exists."
-    #     read -e -p "Do you want to override it?(Y/n): " choice
-    #     case "$choice" in
-	#         y|Y)
-    #             rm $file
-    #             for key in "${!array[@]}"; do
-    #                 echo "$key => ${array[$key]}" >> "$file"
-    #             done
-    #             return
-    #    	        ;;
-	#         n|N)
-    #             return
-    # 	        ;;
-    #     esac	 	     
-	     
-    # fi
+    if [ -f "$1" ]
+    then
+        echo "$file already exists."
+        read -e -p "Do you want to override it?(Y/n): " choice
+        case "$choice" in
+	        y|Y)
+                rm $file
+                for key in "${!array[@]}"; do
+                    echo "$key => ${array[$key]}" >> "$file"
+                done
+                return
+       	        ;;
+	        n|N)
+                return
+    	        ;;
+        esac 
+    fi
 
-
-    for key in "${!array[@]}"; do
-        echo "$key => ${array[$key]}"
-        echo "$key => ${array[$key]}" >> "$file"
-   done
+    for key in "${!array_creds[@]}"; do
+        echo "$key => ${array_creds[$key]}" >> "$1"
+    done
 }
 
 function readArgs {
@@ -134,11 +129,7 @@ function main {
     array_creds["User-uid"]=$USER_UID
     array_creds["Admin-uid"]=$ADMIN_UID
 
-    for key in "${!array_creds[@]}"; do
-        echo "$key => ${array_creds[$key]}"
-    done
-
-    save_credentials $filename $array_creds
+    save_credentials $filename
 
     echo "All credentials are saved in $filename"
     echo "Done!"
