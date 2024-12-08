@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   caddy:
-    image: caddy:latest
+    image: caddy:2.8.4
     container_name: caddy
     network_mode: "host"
     volumes:
@@ -11,7 +11,7 @@ services:
 
 
   cloak-server:
-    image: ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:latest
+    image: ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2.10.0
     command: ["/app/ck-server", "-c", "/app/config.json"]
     restart: always
     network_mode: "host"

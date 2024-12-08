@@ -56,12 +56,26 @@ function save_credentials {
    # Function saves sensitive data to file
    # $1 - filename
    # $2 - associative array
-   echo "Saving credentials"
    local file=$1
    local array=$2
 
+   echo "Saving credentials"
+   if [ -e "$file" ]; then
+     echo "$file already exists."
+     read -e -p "Do you want to override it?(Y/n): " choice
+     case "$choice" in
+	 y|Y)
+    	     ;;
+	 n|N)
+    	     ;;
+     esac	 	     
+
+	     
+   fi
+
+
    for key in "${!array[@]}"; do
-        echo "$key => ${array[$key]}" >> "$file"
+     echo "$key => ${array[$key]}" >> "$file"
    done
 }
 
@@ -79,23 +93,25 @@ function readArgs {
 }
 
 function main {
-   
+
     readArgs	
 
     declare -A array_creds
     install_docker
     install_ss
     clone_repo
-    run_ss # #
+    run_ss $OUTLINE_API_PORT $OUTLINE_KEYS_PORT
 
     URL=$(generate_url)
-    replace_caddy_holders $1 $URL
-    replace_cloak_holders
+    replace_caddy_holders $DOMAIN_NAME $URL $CLOAK_PORT
+    replace_cloak_holders $OUTLINE_KEYS_PORT $CLOAK_PORT #BypassUID $ADMIN_UID $DOMAIN_NAME $CLOAK_PRIVATE_KEY
 
     docker-compose -f ./dobbyvpn-server/docker-compose.yaml up -d
 
     filename="creds.txt"
-    array_creds["special-url"]=$URL
+    array_creds["Special-url"]=$URL
+    array_creds["Cloak-public-key"]=$CLOAK_PUBLIC_KEY
+    array_creds["Cloak-private-key"]=$CLOAK_PRIVATE_KEY
     save_credentials $filename $array_creds
 
     echo "All credentials are saved in $filename"
