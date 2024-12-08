@@ -41,10 +41,10 @@ endif
 all: build
 
 bin/amneziawg-tunnel-linux-amd64:
-	GOARCH=amd64 GOOS=linux go build -o bin/amneziawg-tunnel-linux-amd64 main.go
+	GOARCH=amd64 GOOS=linux go build -o bin/amneziawg-tunnel-linux-amd64 main_linux.go
 
 bin/amneziawg-tunnel-linux-arm64:
-	GOARCH=arm64 GOOS=linux go build -o bin/amneziawg-tunnel-linux-arm64 main.go
+	GOARCH=arm64 GOOS=linux go build -o bin/amneziawg-tunnel-linux-arm64 main_linux.go
 
 bin/amneziawg-tunnel-windows-amd64.exe:
 	mkdir bin/

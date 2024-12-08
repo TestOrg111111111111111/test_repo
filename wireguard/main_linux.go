@@ -1,12 +1,12 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"os"
 	"log"
+	"os"
 	"os/exec"
 	"os/signal"
+
 	"golang.org/x/sys/unix"
 
 	"github.com/amnezia-vpn/amneziawg-go/conn"
@@ -15,17 +15,11 @@ import (
 	"github.com/amnezia-vpn/amneziawg-go/tun"
 )
 
-const CONGIG_PATH_DEFAULT = "awg0.conf"
-const CONGIG_PATH_USAGE = "Path to the config"
-const LOG_LEVEL_DEFAULT = "debug"
-const LOG_LEVEL_USAGE = "Log level"
-var configPathVar string
-var logLevelVar string
-var interfaceName string
-
 func configureAmneziaWG(device *device.Device, configPath string) error {
 	file, err := os.Open(configPath)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return device.IpcSetOperation(file)
 }
@@ -67,14 +61,14 @@ func addAmneziaWGRoute(interfaceName string, address string) error {
 	return nil
 }
 
-func postConfigAmneziaWg() {
-	if err := addAddress("awg0", "10.9.9.2/32"); err != nil {
+func postConfigAmneziaWg(interfaceName string) {
+	if err := addAddress(interfaceName, "10.9.9.2/32"); err != nil {
 		log.Fatalf("AmneziaWG interface address addition failed: %s\n", err)
 	} else {
 		log.Println("AmneziaWG interface address addition succeed")
 	}
 
-	if err := setMtu("awg0", "1420"); err != nil {
+	if err := setMtu(interfaceName, "1420"); err != nil {
 		log.Fatalf("AmneziaWG interface mtu set failed: %s\n", err)
 	} else {
 		log.Println("AmneziaWG interface mtu set succeed")
@@ -82,7 +76,7 @@ func postConfigAmneziaWg() {
 
 	// Set dns
 
-	if err := addAmneziaWGRoute("awg0", "0.0.0.0/0"); err != nil {
+	if err := addAmneziaWGRoute(interfaceName, "0.0.0.0/0"); err != nil {
 		log.Fatalf("AmneziaWG interface route %s failed: %s\n", "0.0.0.0/0", err)
 	} else {
 		log.Printf("AmneziaWG interface route %s succeed\n", "0.0.0.0/0")
@@ -99,25 +93,9 @@ func tunnelAmneziaWGOff(interfaceName string) {
 	}
 }
 
-func main() {
-	flag.StringVar(&configPathVar, "config", CONGIG_PATH_DEFAULT, CONGIG_PATH_USAGE)
-	flag.StringVar(&logLevelVar, "log", LOG_LEVEL_DEFAULT, LOG_LEVEL_USAGE)
-	flag.StringVar(&interfaceName, "iname", "awg0", "...")
-	flag.Parse()
-
-	// get log level
-
-	logLevel := func() int {
-		switch logLevelVar {
-		case "verbose", "debug":
-			return device.LogLevelVerbose
-		case "error":
-			return device.LogLevelError
-		case "silent":
-			return device.LogLevelSilent
-		}
-		return device.LogLevelError
-	}()
+func installTunnel(configPath string, interfaceName string) {
+	// Logger definition:
+	logLevel := device.LogLevelVerbose
 
 	logger := device.NewLogger(
 		logLevel,
@@ -125,7 +103,6 @@ func main() {
 	)
 
 	// open TUN device (or use supplied fd)
-
 	tdev, err := tun.CreateTUN(interfaceName, device.DefaultMTU)
 
 	logger.Verbosef("Starting amneziawg")
@@ -141,13 +118,14 @@ func main() {
 	}
 
 	// open UAPI file
-
 	fileUAPI, err := ipc.UAPIOpen(interfaceName)
 
 	if err != nil {
 		logger.Errorf("UAPI listen error: %v", err)
 		os.Exit(1)
 	}
+
+	// Start device:
 
 	device := device.NewDevice(tdev, conn.NewDefaultBind(), logger)
 
@@ -162,7 +140,7 @@ func main() {
 		logger.Errorf("Failed to listen on uapi socket: %v", err)
 		os.Exit(1)
 	}
-	
+
 	go func() {
 		// Extra ipc configuration:
 		for {
@@ -179,8 +157,8 @@ func main() {
 
 	// Configure AmneziaWG
 
-	configureAmneziaWG(device, configPathVar)
-	postConfigAmneziaWg()
+	configureAmneziaWG(device, configPath)
+	postConfigAmneziaWg(interfaceName)
 
 	// wait for program to terminate
 
@@ -195,9 +173,32 @@ func main() {
 
 	// clean up
 
-	tunnelAmneziaWGOff("awg0")
+	tunnelAmneziaWGOff(interfaceName)
 	uapi.Close()
 	device.Close()
 
 	logger.Verbosef("Shutting down")
+}
+
+func printUnixUsage() {
+	fmt.Printf("Usage: %s [intalltunnelservice CONFIG_PATH INTERFACE_NAME]\n", os.Args[0])
+	os.Exit(1)
+}
+
+func main() {
+	if len(os.Args) < 2 {
+		printUnixUsage()
+	}
+
+	switch os.Args[1] {
+	case "installtunnelservice":
+		if len(os.Args) != 4 {
+			printUnixUsage()
+		}
+
+		installTunnel(os.Args[2], os.Args[3])
+		os.Exit(0)
+	}
+
+	printUnixUsage()
 }
