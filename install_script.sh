@@ -38,9 +38,12 @@ function replace_caddy_holders {
     # Accepts 3 args: $1 - domain name, $2 - secret-url, $3 - cloak-server port
     rm -rf Caddyfile
     cp "Caddyfile-template" "Caddyfile"
-    sed -i "s/<domain-name>/$1/g" Caddyfile
-    sed -i "s/<special-url>/$2/g" Caddyfile
-    sed -i "s/<cloak-server-port>/$3/g" Caddyfile
+    # sed -i "s/<domain-name>/$1/g" "Caddyfile"
+    # sed -i "s/<special-url>/$2/g" "Caddyfile"
+    # sed -i "s/<cloak-server-port>/$3/g" "Caddyfile"
+    sed -i "s|<domain-name>|${1}|" "Caddyfile"
+    sed -i "s|<special-url>|${2}|" "Caddyfile"
+    sed -i "s|<cloak-server-port>|${3}|" "Caddyfile"
 }
 
 function replace_cloak_holders {
@@ -54,12 +57,19 @@ function replace_cloak_holders {
     
     rm -rf cloak-server.conf
     cp "cloak-server-template.conf" "cloak-server.conf"
-    sed -i "s/<keys-port>/$1/g" cloak-server.conf
-    sed -i "s/<cloak-server-port>/$2/g" cloak-server.conf
-    sed -i "s/<user-UID>/$3/g" cloak-server.conf
-    sed -i "s/<admin-UID>/$4/g" cloak-server.conf
-    sed -i "s/<domain-name>/$5/g" cloak-server.conf
-    sed -i "s/<cloak-private-key>/$6/g" cloak-server.conf
+
+    # sed -i "s/<keys-port>/$1/g" "cloak-server.conf"
+    # sed -i "s/<cloak-server-port>/$2/g" "cloak-server.conf"
+    # sed -i "s/<user-UID>/$3/g" "cloak-server.conf"
+    # sed -i "s/<admin-UID>/$4/g" "cloak-server.conf"
+    # sed -i "s/<domain-name>/$5/g" "cloak-server.conf"
+    # sed -i "s/<cloak-private-key>/$6/g" "cloak-server.conf"
+    sed -i "s|<keys-port>|${1}|" "cloak-server.conf"
+    sed -i "s|<cloak-server-port>|${2}|" "cloak-server.conf"
+    sed -i "s|<user-UID>|${3}|" "cloak-server.conf"
+    sed -i "s|<admin-UID>|${4}|" "cloak-server.conf"
+    sed -i "s|<domain-name>|${5}|" "cloak-server.conf"
+    sed -i "s|<cloak-private-key>|${6}|" "cloak-server.conf"
 }
 
 function save_credentials {
