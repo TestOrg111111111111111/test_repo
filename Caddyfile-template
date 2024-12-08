@@ -7,7 +7,7 @@
         path <special-url>
     }
     handle @cloakPath {
-        reverse_proxy @cloakPath 127.0.0.1:<caddy-server-port>
+        reverse_proxy @cloakPath 127.0.0.1:<cloak-server-port>
     }
     
     handle {

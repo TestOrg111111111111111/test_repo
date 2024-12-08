@@ -36,6 +36,7 @@ function run_ss {
 
 function replace_caddy_holders {
     # Accepts 3 args: $1 - domain name, $2 - secret-url, $3 - cloak-server port
+    cp Caddyfile-template Caddyfile
     sed -i "s/<domain-name>/$1/g" Caddyfile
     sed -i "s/<special-url>/$2/g" Caddyfile
     sed -i "s/<cloak-server-port>/$3/g" Caddyfile
@@ -66,13 +67,13 @@ function save_credentials {
     echo "Saving credentials"
     if [ -f "$1" ]
     then
-        echo "$file already exists."
+        echo "$1 already exists."
         read -e -p "Do you want to override it?(Y/n): " choice
         case "$choice" in
 	        y|Y)
-                rm $file
+                rm $1
                 for key in "${!array[@]}"; do
-                    echo "$key => ${array[$key]}" >> "$file"
+                    echo "$key => ${array[$key]}" >> "$1"
                 done
                 return
        	        ;;
