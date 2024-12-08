@@ -8,8 +8,11 @@ function install_docker {
 
 function install_ss {
     echo "Outline installation..."	
-    wget  https://raw.githubusercontent.com/Jigsaw-Code/outline-apps/master/server_manager/install_scripts/install_server.sh
-    chmod u+x ./install_server.sh
+    if ! [ -f "$file" ]
+    then
+        wget  https://raw.githubusercontent.com/Jigsaw-Code/outline-apps/master/server_manager/install_scripts/install_server.sh
+        chmod u+x ./install_server.sh
+    fi
 }
 
 function install_ck_server {
@@ -19,10 +22,6 @@ function install_ck_server {
     mv ck-server /bin/ck-server # sudo permissions!
 }
 
-function clone_repo {
-    echo "Repo cloning..."	
-    git clone https://github.com/DobbyVPN/dobbyvpn-server.git
-}
 
 function generate_url {
      echo `head /dev/urandom | tr -dc A-Za-z0-9 | head -c40`
@@ -119,7 +118,6 @@ function main {
     declare -A array_creds
     install_docker
     install_ss
-    clone_repo
     run_ss $OUTLINE_API_PORT $OUTLINE_KEYS_PORT
 
     URL=$(generate_url)
