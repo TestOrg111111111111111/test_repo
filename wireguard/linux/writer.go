@@ -10,6 +10,7 @@ func (conf *Config) ToWgQuick() string {
 	output.WriteString("[Interface]\n")
 
 	output.WriteString(fmt.Sprintf("PrivateKey = %s\n", conf.Interface.PrivateKey.String()))
+	output.WriteString(fmt.Sprintf("FwMark = %s\n", fmt.Sprint(conf.Interface.FwMark)))
 
 	if conf.Interface.ListenPort > 0 {
 		output.WriteString(fmt.Sprintf("ListenPort = %d\n", conf.Interface.ListenPort))
@@ -116,7 +117,7 @@ func (conf *Config) ToWgQuick() string {
 func (conf *Config) ToUAPI() (uapi string, dnsErr error) {
 	var output strings.Builder
 	output.WriteString(fmt.Sprintf("private_key=%s\n", conf.Interface.PrivateKey.HexString()))
-	output.WriteString(fmt.Sprintf("fwmark=51820\n"))
+	output.WriteString(fmt.Sprintf("fwmark=%d\n", conf.Interface.FwMark))
 
 	if conf.Interface.ListenPort > 0 {
 		output.WriteString(fmt.Sprintf("listen_port=%d\n", conf.Interface.ListenPort))

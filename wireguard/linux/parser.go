@@ -270,6 +270,7 @@ func FromWgQuick(s string, name string) (*Config, error) {
 					return nil, err
 				}
 				conf.Interface.PrivateKey = *k
+				conf.Interface.FwMark = 51820
 				sawPrivateKey = true
 			case "listenport":
 				p, err := parsePort(val)

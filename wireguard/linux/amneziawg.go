@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -36,27 +37,27 @@ func (config *Config) tunnelOn(device *device.Device) error {
 		log.Println("IPC config set success")
 	}
 
-	if setUpInterface(config.Name); err != nil {
+	if config.setUpInterface(); err != nil {
 		return err
 	} else {
 		log.Println("Interface set up success")
 	}
 
 	for _, address := range config.Interface.Addresses {
-		if err := addAddress(config.Name, address.String()); err != nil {
+		if err := config.addAddress(address.String()); err != nil {
 			return err
 		} else {
 			log.Printf("Address %s addition success\n", address.String())
 		}
 	}
 
-	if err := setDns(config.Name, config.Interface.DNS); err != nil {
+	if err := config.setDns(); err != nil {
 		return err
 	}
 
 	for _, peer := range config.Peers {
 		for _, allowed_ip := range peer.AllowedIPs {
-			if err := addRoute(config.Name, allowed_ip.String()); err != nil {
+			if err := config.addRoute(allowed_ip.String()); err != nil {
 				log.Printf("Route from %s address to %s is failed", allowed_ip.String(), config.Name)
 				return err
 			} else {
@@ -68,8 +69,8 @@ func (config *Config) tunnelOn(device *device.Device) error {
 	return err
 }
 
-func setUpInterface(interfaceName string) error {
-	link, err := netlink.LinkByName(interfaceName)
+func (config *Config) setUpInterface() error {
+	link, err := netlink.LinkByName(config.Name)
 	if err != nil {
 		return err
 	}
@@ -77,9 +78,9 @@ func setUpInterface(interfaceName string) error {
 	return netlink.LinkSetUp(link)
 }
 
-func addAddress(interfaceName string, address string) error {
+func (config *Config) addAddress(address string) error {
 	// sudo ip -4 address add <address> dev <interfaceName>
-	link, err := netlink.LinkByName(interfaceName)
+	link, err := netlink.LinkByName(config.Name)
 	if err != nil {
 		return err
 	}
@@ -92,16 +93,14 @@ func addAddress(interfaceName string, address string) error {
 	return netlink.AddrAdd(link, addr)
 }
 
-func setDns(interfaceName string, dns []net.IP) error {
+func (config *Config) setDns() error {
 	// TODO
 	return nil
 }
 
-func addRoute(interfaceName string, address string) error {
-	var tableString = "51820"
-
+func (config *Config) addRoute(address string) error {
 	// sudo ip rule add not fwmark <table> table <table>
-	if err := exec.Command("sudo", "ip", "rule", "add", "not", "fwmark", tableString, "table", tableString).Run(); err != nil {
+	if err := exec.Command("sudo", "ip", "rule", "add", "not", "fwmark", fmt.Sprint(config.Interface.FwMark), "table", fmt.Sprint(config.Interface.FwMark)).Run(); err != nil {
 		return err
 	}
 
@@ -111,7 +110,7 @@ func addRoute(interfaceName string, address string) error {
 	}
 
 	// sudo ip route add <address> dev <interfaceName> table <table>
-	link, err := netlink.LinkByName(interfaceName)
+	link, err := netlink.LinkByName(config.Name)
 	if err != nil {
 		return err
 	}

@@ -37,6 +37,7 @@ type Config struct {
 
 type Interface struct {
 	PrivateKey Key
+	FwMark     uint16
 	Addresses  []IPCidr
 	ListenPort uint16
 	MTU        uint16
