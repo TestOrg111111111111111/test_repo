@@ -69,8 +69,12 @@ func (config *Config) tunnelOn(device *device.Device) error {
 }
 
 func setUpInterface(interfaceName string) error {
-	var cmd = exec.Command("sudo", "ip", "link", "set", "up", "dev", interfaceName)
-	return cmd.Run()
+	link, err := netlink.LinkByName(interfaceName)
+	if err != nil {
+		return err
+	}
+
+	return netlink.LinkSetUp(link)
 }
 
 func addAddress(interfaceName string, address string) error {
@@ -132,10 +136,13 @@ func addRoute(interfaceName string, address string) error {
 }
 
 func (config *Config) tunnelOff() {
-	var cmd = exec.Command("sudo", "ip", "link", "del", config.Name)
+	link, err := netlink.LinkByName(config.Name)
+	if err == nil {
+		err = netlink.LinkDel(link)
+	}
 
-	if output, err := cmd.CombinedOutput(); err != nil {
-		log.Fatalf("Could not remove AmneziaWG interface:\n error: %s\n output: %s\n", err, output)
+	if err != nil {
+		log.Fatalf("Could not remove AmneziaWG interface: %s\n", err)
 	} else {
 		log.Println("Removed AmneziaWG interface")
 	}
