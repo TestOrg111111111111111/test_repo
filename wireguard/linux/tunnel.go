@@ -23,7 +23,7 @@ func installTunnel(configPath string, interfaceName string) {
 	)
 
 	// open TUN device (or use supplied fd)
-	tdev, err := tun.CreateTUN(interfaceName, device.DefaultMTU)
+	tdev, err := tun.CreateTUN(interfaceName, 1420)
 
 	logger.Verbosef("Starting amneziawg")
 
@@ -77,12 +77,16 @@ func installTunnel(configPath string, interfaceName string) {
 
 	// Configure AmneziaWG
 
-	if err := configureAmneziaWG(device, configPath, interfaceName); err != nil {
+	config, err := ConfigFromPath(configPath, interfaceName)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	if err := config.tunnelOn(device); err != nil {
 		log.Fatalln(err)
 	} else {
 		log.Println("Successful configuration")
 	}
-	postConfigAmneziaWg(interfaceName)
 
 	// wait for program to terminate
 
@@ -97,7 +101,7 @@ func installTunnel(configPath string, interfaceName string) {
 
 	// clean up
 
-	tunnelAmneziaWGOff(interfaceName)
+	config.tunnelOff()
 	uapi.Close()
 	device.Close()
 
