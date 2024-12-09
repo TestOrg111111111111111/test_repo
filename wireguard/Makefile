@@ -38,30 +38,24 @@ else
 	BUILD_TARGET=bin/amneziawg-tunnel-${GOOS_FLAG}-${GOARCH_FLAG}
 endif
 
-all: build
+build: ${BUILD_TARGET}
 
-bin/amneziawg-tunnel-linux-amd64:
+bin/:
+	mkdir bin/
+
+bin/amneziawg-tunnel-linux-amd64: bin/
 	GOARCH=amd64 GOOS=linux go build -o bin/amneziawg-tunnel-linux-amd64 linux/main.go linux/tunnel.go linux/amneziawg.go linux/config.go linux/parser.go linux/writer.go
 
-bin/amneziawg-tunnel-linux-arm64:
+bin/amneziawg-tunnel-linux-arm64: bin/
 	GOARCH=arm64 GOOS=linux go build -o bin/amneziawg-tunnel-linux-arm64 linux/main.go linux/tunnel.go linux/amneziawg.go linux/config.go linux/parser.go linux/writer.go
 
-bin/amneziawg-tunnel-windows-amd64.exe:
-	mkdir bin/
-	cp wintun/bin/amd64/wintun.dll bin/
-	GOARCH=amd64 GOOS=windows go build -o bin/amneziawg-tunnel-windows-amd64.exe main_windows.go
+bin/amneziawg-tunnel-windows-amd64.exe: bin/
+	cp windows/wintun/bin/amd64/wintun.dll bin/
+	GOARCH=amd64 GOOS=windows go build -o bin/amneziawg-tunnel-windows-amd64.exe windows/main_windows.go
 
-bin/amneziawg-tunnel-windows-arm64.exe:
-	mkdir bin/
-	cp wintun/bin/arm64/wintun.dll bin/
-	GOARCH=arm64 GOOS=windows go build -o bin/amneziawg-tunnel-windows-arm64.exe main_windows.go
-
-bin/amneziawg-tunnel-windows-x86.exe:
-	mkdir bin/
-	cp wintun/bin/x86/wintun.dll bin/
-	GOARCH=x86 GOOS=windows go build -o bin/amneziawg-tunnel-windows-x86.exe main_windows.go
-
-build: ${BUILD_TARGET}
+bin/amneziawg-tunnel-windows-arm64.exe: bin/
+	cp windows/wintun/bin/arm64/wintun.dll bin/
+	GOARCH=arm64 GOOS=windows go build -o bin/amneziawg-tunnel-windows-arm64.exe windows/main_windows.go
 
 clean:
 	go clean
