@@ -6,21 +6,38 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/amnezia-vpn/amneziawg-go/device"
 	"github.com/vishvananda/netlink"
 )
 
-func configureAmneziaWG(device *device.Device, configPath string) error {
-	file, err := os.Open(configPath)
+func configureAmneziaWG(device *device.Device, configPath string, interfaceName string) error {
+	configData, err := os.ReadFile(configPath)
 	if err != nil {
 		return err
 	}
 
-	return device.IpcSetOperation(file)
+	configString := string(configData)
+	config, err := FromWgQuickWithUnknownEncoding(configString, interfaceName)
+	if err != nil {
+		return err
+	}
+
+	uapiString, err := config.ToUAPI()
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Appliying uapi string:\n%s\n", uapiString)
+
+	reader := strings.NewReader(uapiString)
+
+	return device.IpcSetOperation(reader)
 }
 
 func addAddress(interfaceName string, address string) error {
+	// sudo ip -4 address add <address> dev <interfaceName>
 	link, err := netlink.LinkByName(interfaceName)
 	if err != nil {
 		return err
@@ -32,8 +49,6 @@ func addAddress(interfaceName string, address string) error {
 	}
 
 	return netlink.AddrAdd(link, addr)
-	// var cmd = exec.Command("sudo", "ip", "-4", "address", "add", address, "dev", interfaceName)
-	// return cmd.Run()
 }
 
 func setMtu(interfaceName string, mtu string) error {
@@ -42,10 +57,7 @@ func setMtu(interfaceName string, mtu string) error {
 }
 
 func addAmneziaWGRoute(interfaceName string, address string) error {
-	var table = 51820
 	var tableString = "51820"
-
-	// sudo awg set <interfaceName> fwmark <table>
 
 	// sudo ip rule add not fwmark <table> table <table>
 	if err := exec.Command("sudo", "ip", "rule", "add", "not", "fwmark", tableString, "table", tableString).Run(); err != nil {
@@ -53,7 +65,7 @@ func addAmneziaWGRoute(interfaceName string, address string) error {
 		return err
 	}
 
-	// sudo ip rule add table main suppress_prefixlength 0
+	// // sudo ip rule add table main suppress_prefixlength 0
 	if err := exec.Command("sudo", "ip", "rule", "add", "table", "main", "suppress_prefixlength", "0").Run(); err != nil {
 		fmt.Println("#3")
 		return err
@@ -70,7 +82,7 @@ func addAmneziaWGRoute(interfaceName string, address string) error {
 		return err
 	}
 
-	route := netlink.Route{LinkIndex: link.Attrs().Index, Dst: dst, Table: table}
+	route := netlink.Route{LinkIndex: link.Attrs().Index, Dst: dst, Table: 51820}
 
 	if err := netlink.RouteAdd(&route); err != nil {
 		fmt.Println("#4")

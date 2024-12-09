@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 
@@ -76,7 +77,11 @@ func installTunnel(configPath string, interfaceName string) {
 
 	// Configure AmneziaWG
 
-	configureAmneziaWG(device, configPath)
+	if err := configureAmneziaWG(device, configPath, interfaceName); err != nil {
+		log.Fatalln(err)
+	} else {
+		log.Println("Successful configuration")
+	}
 	postConfigAmneziaWg(interfaceName)
 
 	// wait for program to terminate
