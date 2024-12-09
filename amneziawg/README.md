@@ -92,3 +92,7 @@ PersistentKeepalive = <...>
 [Peer]
 ...
 ```
+
+## Additional documentation
+
+* [Configure AmneziaWG on Unix server](./SERVER_CONFIG_UNIX.md)
