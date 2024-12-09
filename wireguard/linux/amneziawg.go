@@ -112,7 +112,7 @@ func addRoute(interfaceName string, address string) error {
 		return err
 	}
 
-	_, dst, err := net.ParseCIDR("0.0.0.0/0")
+	_, dst, err := net.ParseCIDR(address)
 	if err != nil {
 		return err
 	}
