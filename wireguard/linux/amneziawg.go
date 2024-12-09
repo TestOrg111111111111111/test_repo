@@ -1,15 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/amnezia-vpn/amneziawg-go/device"
 	"github.com/vishvananda/netlink"
+	"golang.org/x/sys/unix"
+
+	sysctl "github.com/lorenzosaino/go-sysctl"
 )
 
 func ConfigFromPath(configPath string, interfaceName string) (*Config, error) {
@@ -100,12 +101,19 @@ func (config *Config) setDns() error {
 
 func (config *Config) addRoute(address string) error {
 	// sudo ip rule add not fwmark <table> table <table>
-	if err := exec.Command("sudo", "ip", "rule", "add", "not", "fwmark", fmt.Sprint(config.Interface.FwMark), "table", fmt.Sprint(config.Interface.FwMark)).Run(); err != nil {
+	ruleNot := netlink.NewRule()
+	ruleNot.Invert = true
+	ruleNot.Mark = uint32(config.Interface.FwMark)
+	ruleNot.Table = int(config.Interface.FwMark)
+	if err := netlink.RuleAdd(ruleNot); err != nil {
 		return err
 	}
 
 	// sudo ip rule add table main suppress_prefixlength 0
-	if err := exec.Command("sudo", "ip", "rule", "add", "table", "main", "suppress_prefixlength", "0").Run(); err != nil {
+	ruleAdd := netlink.NewRule()
+	ruleAdd.Table = unix.RT_TABLE_MAIN
+	ruleAdd.SuppressPrefixlen = 0
+	if err := netlink.RuleAdd(ruleAdd); err != nil {
 		return err
 	}
 
@@ -127,7 +135,7 @@ func (config *Config) addRoute(address string) error {
 	}
 
 	// sudo sysctl -q net.ipv4.conf.all.src_valid_mark=1
-	if err := exec.Command("sudo", "sysctl", "-q", "net.ipv4.conf.all.src_valid_mark=1").Run(); err != nil {
+	if err := sysctl.Set("net.ipv4.conf.all.src_valid_mark", "1"); err != nil {
 		return err
 	}
 
