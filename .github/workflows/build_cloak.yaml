@@ -26,10 +26,36 @@ jobs:
           echo "CLOAK_VERSION=$VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
+      - name: Increment personal version
+        id: increment-version
+        run: |
+          VERSION_FILE=".d_version"
+          
+          if [ ! -f "$VERSION_FILE" ]; then
+            echo "1" > $VERSION_FILE
+          fi
+
+          CURRENT_D=$(cat $VERSION_FILE)          
+          NEW_D=$((CURRENT_D + 1))
+          echo $NEW_D > $VERSION_FILE
+          
+          COMPLETE_VERSION="V${CLOAK_VERSION}.${NEW_D}"
+          echo "COMPLETE_VERSION=$COMPLETE_VERSION"
+          echo "COMPLETE_VERSION=$COMPLETE_VERSION" >> $GITHUB_ENV
+
       - name: Build and Publish latest Docker image
         uses: DrSkunk/gp-docker-action@1.1.9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           image-name: cloak-server
           dockerfile: Dockerfile-cloak-server
-          image-tag: ${{ env.VERSION }}
+          image-tag: ${{ env.COMPLETE_VERSION }}
+
+      - name: Commit updated version
+        run: |
+          # Commit the updated .d version to the repository
+          git config --local user.name "github-actions"
+          git config --local user.email "github-actions@github.com"
+          git add .d_version
+          git commit -m "Incremented .d version to ${{ env.COMPLETE_VERSION }}"
+          git push
