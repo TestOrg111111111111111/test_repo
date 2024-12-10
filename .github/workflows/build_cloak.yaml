@@ -1,13 +1,13 @@
 permissions:
   packages: write
-  contents: read
+  contents: write
 
 name: Build and Push Docker Image(NEW)
 on:
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
   
 
 jobs:
@@ -52,11 +52,13 @@ jobs:
           image-tag: ${{ env.COMPLETE_VERSION }}
 
       - name: Commit updated version
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Commit the updated .d version to the repository
           git config --local user.name "github-actions"
           git config --local user.email "github-actions@github.com"
-          git remote set-url origin https://${{ secrets.ACCESS_TOKEN_ }}@github.com/DobbyVPN/dobbyvpn-server.git
+          git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}
+          
           git add .d_version
-          git commit -m "Incremented .d version to ${{ env.COMPLETE_VERSION }}"
-          git push origin main
+          git commit -m "Incremented .d version to ${{ env.COMPLETE_VERSION }}" 
+          git push origin HEAD:${{ github.ref_name }}
