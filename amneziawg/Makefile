@@ -1,64 +1,49 @@
 ifeq ($(OS), Windows_NT)
-	GOOS_FLAG=windows
-
 	ifeq ($(PROCESSOR_ARCHITEW6432), AMD64)
 		GOARCH_FLAG=amd64
+		BUILD_TARGET=bin/windows/amd64/amneziawg-tunnel.exe
 	else
 		ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
 			GOARCH_FLAG=amd64
+			BUILD_TARGET=bin/windows/amd64/amneziawg-tunnel.exe
 		endif
 		ifeq ($(PROCESSOR_ARCHITECTURE),x86)
-			GOARCH_FLAG=x86
+			GOARCH_FLAG=386
+			BUILD_TARGET=bin/windows/x86/amneziawg-tunnel.exe
 		endif
 	endif
-
-	BUILD_TARGET=bin/amneziawg-tunnel-${GOOS_FLAG}-${GOARCH_FLAG}.exe
 else
-	UNAME_S := $(shell uname -s)
-
-	ifeq ($(UNAME_S), Linux)
-		GOOS_FLAG=linux
-	endif
-	ifeq ($(UNAME_S), Darwin)
-		GOOS_FLAG=darwin
-	endif
-	
-	UNAME_P := $(shell uname -p)
-	
-	ifeq ($(UNAME_P),x86_64)
-		GOARCH_FLAG=amd64
-	endif
-	ifneq ($(filter %86, $(UNAME_P)),)
-		GOARCH_FLAG=x86
-	endif
-	ifneq ($(filter arm%,$(UNAME_P)),)
-		GOARCH_FLAG=arm64
-	endif
-
-	BUILD_TARGET=bin/amneziawg-tunnel-${GOOS_FLAG}-${GOARCH_FLAG}
+	BUILD_TARGET=bin/linux/amneziawg-tunnel
 endif
 
 build: ${BUILD_TARGET}
 
 bin/:
 	mkdir bin/
+bin/windows: bin/
+	mkdir bin/windows/
+bin/linux: bin/
+	mkdir bin/linux/
+bin/windows/amd64: bin/windows
+	mkdir bin/windows/amd64
+bin/windows/x86: bin/windows
+	mkdir bin/windows/x86
 
-bin/amneziawg-tunnel-linux-amd64: bin/
-	GOARCH=amd64 GOOS=linux go build -o bin/amneziawg-tunnel-linux-amd64 linux/main.go linux/tunnel.go linux/amneziawg.go linux/config.go linux/parser.go linux/writer.go
+bin/linux/amneziawg-tunnel: bin/linux
+	GOOS=linux go build -o bin/linux/amneziawg-tunnel linux/main.go linux/tunnel.go linux/amneziawg.go linux/config.go linux/parser.go linux/writer.go
 
-bin/amneziawg-tunnel-linux-arm64: bin/
-	GOARCH=arm64 GOOS=linux go build -o bin/amneziawg-tunnel-linux-arm64 linux/main.go linux/tunnel.go linux/amneziawg.go linux/config.go linux/parser.go linux/writer.go
+bin/windows/amd64/amneziawg-tunnel.exe: bin/windows/amd64
+	cp windows/wintun/bin/amd64/wintun.dll bin/windows/amd64/
+	GOARCH=amd64 GOOS=windows go build -o bin/windows/amd64/amneziawg-tunnel.exe windows/main_windows.go
 
-bin/amneziawg-tunnel-windows-amd64.exe: bin/
-	cp windows/wintun/bin/amd64/wintun.dll bin/
-	GOARCH=amd64 GOOS=windows go build -o bin/amneziawg-tunnel-windows-amd64.exe windows/main_windows.go
+bin/windows/x86/amneziawg-tunnel.exe: bin/windows/x86
+	cp windows/wintun/bin/x86/wintun.dll bin/windows/x86/
+	GOARCH=386 GOOS=windows go build -o bin/windows/x86/amneziawg-tunnel.exe windows/main_windows.go
 
-bin/amneziawg-tunnel-windows-arm64.exe: bin/
-	cp windows/wintun/bin/arm64/wintun.dll bin/
-	GOARCH=arm64 GOOS=windows go build -o bin/amneziawg-tunnel-windows-arm64.exe windows/main_windows.go
+all: bin/linux/amneziawg-tunnel bin/windows/amd64/amneziawg-tunnel.exe bin/windows/x86/amneziawg-tunnel.exe
 
 clean:
 	go clean
 	rm -rf bin/
 
-.PHONY: all build clean
+.PHONY: build all clean

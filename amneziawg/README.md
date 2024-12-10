@@ -4,16 +4,28 @@ A simple script, that runs [AmneziaWG](https://docs.amnezia.org/documentation/am
 
 ## Build
 
-### Build on the current platform
+### Build for the current platform
 
 ```bash
 make build
 ```
 
-### Build specific platform:
+### Build for specific platform:
 
 ```bash
-make bin/amneziawg-tunnel-linux-amd64
+make bin/windows/amd64/amneziawg-tunnel.exe
+```
+
+### Build for all possible platforms:
+
+```bash
+make all
+```
+
+### Clean
+
+```bash
+make clean
 ```
 
 ## Usage
