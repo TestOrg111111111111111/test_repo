@@ -22,9 +22,9 @@ jobs:
         run: |
           git clone https://github.com/cbeuw/Cloak.git
           cd Cloak
-          VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
-          echo "CLOAK_VERSION=$VERSION"
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          CLOAK_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo "CLOAK_VERSION=$CLOAK_VERSION"
+          echo "CLOAK_VERSION=$CLOAK_VERSION" >> $GITHUB_ENV
 
       - name: Increment personal version
         id: increment-version
@@ -32,14 +32,14 @@ jobs:
           VERSION_FILE=".d_version"
           
           if [ ! -f "$VERSION_FILE" ]; then
-            echo "1" > $VERSION_FILE
+            echo "0" > $VERSION_FILE
           fi
 
           CURRENT_D=$(cat $VERSION_FILE)          
           NEW_D=$((CURRENT_D + 1))
           echo $NEW_D > $VERSION_FILE
           
-          COMPLETE_VERSION="V${CLOAK_VERSION}.${NEW_D}"
+          COMPLETE_VERSION="${CLOAK_VERSION}.${NEW_D}"
           echo "COMPLETE_VERSION=$COMPLETE_VERSION"
           echo "COMPLETE_VERSION=$COMPLETE_VERSION" >> $GITHUB_ENV
 
@@ -56,6 +56,7 @@ jobs:
           # Commit the updated .d version to the repository
           git config --local user.name "github-actions"
           git config --local user.email "github-actions@github.com"
+          git remote set-url origin https://${{ secrets.ACCESS_TOKEN_ }}@github.com/DobbyVPN/dobbyvpn-server.git
           git add .d_version
           git commit -m "Incremented .d version to ${{ env.COMPLETE_VERSION }}"
-          git push
+          git push origin main
