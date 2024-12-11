@@ -111,6 +111,22 @@ function readArgs {
     ADMIN_UID=$(/bin/ck-server -uid | cut -d" " -f4)
 }
 
+function stop_and_remove_caddy_cloak {
+    CONTAINERS=("caddy" "ck-server")
+
+    for CONTAINER in "${CONTAINERS[@]}"; do
+    CONTAINER_ID=$(docker ps -aq --filter "name=^${CONTAINER}$")
+    
+    if [ -n "$CONTAINER_ID" ]; then
+        echo "Found container: $CONTAINER (ID: $CONTAINER_ID)"
+        docker stop "$CONTAINER_ID" && echo "Stopped container: $CONTAINER"
+        docker rm "$CONTAINER_ID" && echo "Removed container: $CONTAINER"
+    else
+        echo "No container found with name: $CONTAINER"
+    fi
+    done
+}
+
 function main {
 
     install_ck_server
@@ -124,6 +140,7 @@ function main {
     replace_caddy_holders $DOMAIN_NAME $URL $CLOAK_PORT
     replace_cloak_holders $OUTLINE_KEYS_PORT $CLOAK_PORT $USER_UID $ADMIN_UID $DOMAIN_NAME $CLOAK_PRIVATE_KEY
 
+    stop_and_remove_caddy_cloak
     docker-compose -f docker-compose.yaml up -d
 
     filename="creds.txt"
