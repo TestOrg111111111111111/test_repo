@@ -1,65 +1,104 @@
-# Configure AmneziaWG on Unix server
+# Configure AmneziaWG on Ubuntu server
 
-## Preparation
+There will be a short tutorial how to run server on Ubuntu server.
 
-### Download required libraries:
+Notice, that all next commands should be run under superuser privileges (Run with `sudo` or after executing `sudo su` command)
 
-```bash
-git clone https://github.com/amnezia-vpn/amneziawg-go
-git clone https://github.com/amnezia-vpn/amneziawg-tools
-```
+## Prepare system
 
-### Build libraries:
-
-Build `amneziawg-go/amneziawg-go`:
+Add `dev-src` sources:
 
 ```bash
-cd amneziawg-go/
-make
-cd ../
+cp -f /etc/apt/sources.list /etc/apt/sources.list.backup
+sed "s/# deb-src/deb-src/" /etc/apt/sources.list.backup > /etc/apt/sources.list
 ```
 
-Build `amneziawg-tools/src/wg-quick/awg`:
+Enable net forwarding:
 
 ```bash
-cd amneziawg-tools/src/
-make
-cd ../../
+echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/00-amnezia.conf
 ```
 
-## Intall tunnel
-
-Variables:
-* `INTERFACE_NAME` - just a simple interface name
-* `CONFIG_PATH` - path the the server config file, its format can be seen a the end of file
-* `SERVER_ADDRESS` - Server tunnel addres, just use `10.9.9.1/24`
-
-### Run interface
+End up with 
 
 ```bash
-amneziawg-go/amneziawg-go INTERFACE_NAME
+reboot
 ```
 
-### Configure interface
+## Install AmneziaWG
 
 ```bash
-amneziawg-tools/src/wg-quick/awg setconf INTERFACE_NAME CONFIG_PATH
-ip -4 address add SERVER_ADDRESS dev INTERFACE_NAME
-ip link set mtu 1420 up dev INTERFACE_NAME
+add-apt-repository -y ppa:amnezia/ppa
+apt install -y amneziawg
 ```
 
-### Routing config
+Check if AmneziaWG installed:
 
 ```bash
-sysctl -w net.ipv4.ip_forward=1
+awg --version
+awg-quick --version
+lsmod | grep amnezia
 ```
 
-And then `PostUp` iptables command, that can be generated using [awgcfg.py](https://gist.githubusercontent.com/remittor/8c3d9ff293b2ba4b13c367cc1a69f9eb/raw/awgcfg.py) util or using the next pattern:
+> The last command `lsmod | grep amnezia` can show, that amnezawg haven't installed, try execute `modprobe amneziawg` and after check `modinfo amneziawg | grep ver`.
+> If you cannot stil see amneziawg, it can happen because of **Secure Boot** turned on on your device.
+
+## Make config
+
+### Config generating by yourself
+
+#### Config pattern
+
 ```
-iptables -A INPUT -p udp --dport <SERVER_PORT> -m conntrack --ctstate NEW -j ACCEPT --wait 10 --wait-interval 50; iptables -A FORWARD -i <SERVER_IFACE> -o <SERVER_TUN> -j ACCEPT --wait 10 --wait-interval 50; iptables -A FORWARD -i <SERVER_TUN> -j ACCEPT --wait 10 --wait-interval 50; iptables -t nat -A POSTROUTING -o <SERVER_IFACE> -j MASQUERADE --wait 10 --wait-interval 50; ip6tables -A FORWARD -i <SERVER_TUN> -j ACCEPT --wait 10 --wait-interval 50; ip6tables -t nat -A POSTROUTING -o <SERVER_IFACE> -j MASQUERADE --wait 10 --wait-interval 50
+[Interface]
+PrivateKey = <...>
+Address = <...>
+DNS = <...>
+MTU = <...>
+Table = <...>
+ListenPort = <...>
+Jc = <...>
+Jmin = <...>
+Jmax = <...>
+S1 = <...>
+S2 = <...>
+H1 = <...>
+H2 = <...>
+H3 = <...>
+H4 = <...>
+PreUp = <...>
+PostUp = <...>
+PreDown = <...>
+PostDown = <...>
+SaveConfig = <...>
+
+[Peer]
+PublicKey = <...>
+PresharedKey = <...>
+AllowedIPs = <...>
+Endpoint = <...>:<...>
+PersistentKeepalive = <...>
+
+[Peer]
+...
 ```
 
-#### Config generating using [awgcfg.py](https://gist.githubusercontent.com/remittor/8c3d9ff293b2ba4b13c367cc1a69f9eb/raw/awgcfg.py)
+Parameters description can be found at [wg-quick(8)](https://www.man7.org/linux/man-pages/man8/wg-quick.8.html) and [wg(8)](https://www.man7.org/linux/man-pages/man8/wg.8.html) utils documentation.
+
+#### Obfuscation parameters:
+
+* `Jc` -- Junk packets count, `1 ≤ Jc ≤ 128`; recommended range is from 3 to 10 inclusive
+* `Jmin` -- Junk packet minimum size, `Jmin < Jmax`; recommended value is 50
+* `Jmax` -- Junk packet maximum size, `Jmin < Jmax ≤ 1280`; recommended value is 1000
+* `S1` -- Initiation packet junk size, `S1 < 1280; S1 + 56 ≠ S2`; recommended range is from 15 to 150 inclusive
+* `S2` -- Responce packet junk size, `S2 < 1280`; recommended range is from 15 to 150 inclusive
+* `H1` -- Initiation packet header
+* `H2` -- Responce packet header
+* `H3` -- Cookie packet header
+* `H4` -- Transport packet header
+* `H1`/`H2`/`H3`/`H4` -- must be unique among each other; recommended range is from 5 to 2147483647 inclusive
+
+### Config generating using [awgcfg.py](https://gist.githubusercontent.com/remittor/8c3d9ff293b2ba4b13c367cc1a69f9eb/raw/awgcfg.py)
 
 ```bash
 wget -O awgcfg.py https://gist.githubusercontent.com/remittor/8c3d9ff293b2ba4b13c367cc1a69f9eb/raw/awgcfg.py
@@ -71,36 +110,23 @@ python3 awgcfg.py -c
 
 This generates server config to the `CONFIG_PATH` file and client config to the `ClientName.conf` path.
 
-> **Notice I**: There is a small bug at this script, it generates invalid obfuscation parameter (jc, jmin etc), so that copy that fields from one config to another
+> **Notice**: There is a small bug at this script, it generates invalid obfuscation parameters (`jc`, `jmin` etc), so that copy that fields from one config to another
 
-> **Notice II**: This script generates server config with extra parameters: `Address`, `PostUp` and `PostDown`. Theese parameters should be removed, PostUp command should be run after interface configuration (*Routing config* step), PostDown command should be run after interface shutdown and Address parameter should be used as SERVER_ADDRESS parameter 
+## Install tunnel
 
-## Conclusion:
+Simply run:
 
 ```bash
-git clone https://github.com/amnezia-vpn/amneziawg-go
-git clone https://github.com/amnezia-vpn/amneziawg-tools
-
-cd amneziawg-go/
-make
-cd ../
-
-cd amneziawg-tools/src/
-make
-cd ../../
-
-amneziawg-go/amneziawg-go INTERFACE_NAME
-
-amneziawg-tools/src/wg-quick/awg setconf INTERFACE_NAME CONFIG_PATH
-ip -4 address add SERVER_ADDRESS dev INTERFACE_NAME
-ip link set mtu 1420 up dev INTERFACE_NAME
-
-sysctl -w net.ipv4.ip_forward=1
-./PostUp.sh
+awg-quick up SERVER_CONFIG_PATH
 ```
 
-## Links
+Or copy config to the path `/etc/amnezia/amneziawg/INTERFACE_NAME.conf` and run:
 
-* [AmneziaWG Interface](https://github.com/amnezia-vpn/amneziawg-go)
-* [AmneziaWG Tools](https://github.com/amnezia-vpn/amneziawg-tools)
-* [AmneziaWG guide by authors](https://github.com/openwrt-xiaomi/awg-openwrt/wiki/AmneziaWG-installing#%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0-amneziawg-%D0%B8-%D0%B4%D1%80%D1%83%D0%B3%D0%B8%D1%85-%D0%BD%D1%83%D0%B6%D0%BD%D1%8B%D1%85-%D1%83%D1%82%D0%B8%D0%BB%D0%B8%D1%82-%D0%BD%D0%B0-vds-%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80%D0%B5)
+```bash
+awg-quick up INTERFACE_NAME
+```
+
+### Config utilities
+
+* `awg-quick(8)` utility is just a [wg-quick(8)](https://www.man7.org/linux/man-pages/man8/wg-quick.8.html) with obfuscation parameters support
+* `awg(8)` utility is just a [wg(8)](https://www.man7.org/linux/man-pages/man8/wg.8.html) with obfuscation parameters support
