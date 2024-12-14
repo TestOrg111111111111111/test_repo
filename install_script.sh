@@ -2,8 +2,23 @@
 
 function install_docker {
     echo "Docker installation..."	
-    apt-get update
-    apt-get install -y docker.io docker-compose wget git
+    #apt-get update
+    #apt-get install -y docker.io docker-compose wget git
+    # Add Docker's official GPG key:
+    sudo apt-get update
+    sudo apt-get install ca-certificates curl
+    sudo install -m 0755 -d /etc/apt/keyrings
+    sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+    # Add the repository to Apt sources:
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    sudo apt-get update
+
+    sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 }
 
 function install_ss {
@@ -14,16 +29,6 @@ function install_ss {
         chmod u+x ./install_server.sh
     fi
 }
-
-function install_ck_server {
-    # It needs for key generation in system
-    if ! which /bin/ck-server > /dev/null; then
-        wget https://github.com/cbeuw/Cloak/releases/download/v2.7.0/ck-server-linux-amd64-v2.7.0 -O ck-server
-        chmod +x ck-server
-        mv ck-server /bin/ck-server # sudo permissions!
-    fi
-}
-
 
 function generate_url {
     echo `head /dev/urandom | tr -dc A-Za-z0-9 | head -c40`
@@ -45,25 +50,6 @@ function replace_caddy_holders {
     sed -i "s|<cloak-server-port>|${3}|" "Caddyfile"
 }
 
-function replace_cloak_holders {
-    # Accepts 6 args:
-    # $1 - keys-port for ss
-    # $2 - cloak-server port
-    # $3 - bypassUID
-    # $4 - adminUID
-    # $5 - domain-name (for RedirAddr)
-    # $6 - cloak private key
-    
-    rm -rf cloak-server.conf
-    cp "cloak-server-template.conf" "cloak-server.conf"
-
-    sed -i "s|<keys-port>|${1}|" "cloak-server.conf"
-    sed -i "s|<cloak-server-port>|${2}|" "cloak-server.conf"
-    sed -i "s|<user-UID>|${3}|" "cloak-server.conf"
-    sed -i "s|<admin-UID>|${4}|" "cloak-server.conf"
-    sed -i "s|<domain-name>|${5}|" "cloak-server.conf"
-    sed -i "s|<cloak-private-key>|${6}|" "cloak-server.conf"
-}
 
 function save_credentials {
    # Function saves sensitive data to file
@@ -103,12 +89,6 @@ function readArgs {
         echo "Error: you didn't enter domain name!" >&2
         exit 1
     fi
-
-    KEYPAIRS=$(/bin/ck-server -key)
-    CLOAK_PRIVATE_KEY=$(echo $KEYPAIRS | cut -d" " -f13)
-    CLOAK_PUBLIC_KEY=$(echo $KEYPAIRS | cut -d" " -f5)
-    USER_UID=$(/bin/ck-server -uid | cut -d" " -f4)
-    ADMIN_UID=$(/bin/ck-server -uid | cut -d" " -f4)
 }
 
 function stop_and_remove_caddy_cloak {
@@ -127,9 +107,18 @@ function stop_and_remove_caddy_cloak {
     done
 }
 
+function replace_holders_cloak_start {
+    # replaces all holders in start script for cloak
+    # $1 - keys-port for outline server
+    # $2 - bind port for cloak server
+    # $3 - domain name
+    sed -i "s|<1>|$1|" "cloak_start.sh"
+    sed -i "s|<2>|$2|" "cloak_start.sh"
+    sed -i "s|<3>|$3|" "cloak_start.sh"
+}
+
 function main {
 
-    install_ck_server
     readArgs	
 
     install_docker
@@ -138,18 +127,24 @@ function main {
 
     URL=$(generate_url)
     replace_caddy_holders $DOMAIN_NAME $URL $CLOAK_PORT
-    replace_cloak_holders $OUTLINE_KEYS_PORT $CLOAK_PORT $USER_UID $ADMIN_UID $DOMAIN_NAME $CLOAK_PRIVATE_KEY
 
     stop_and_remove_caddy_cloak
+
+    rm -rf cloak_start.sh
+    cp "cloak_start_template.sh" "cloak_start.sh"
+	
+    replace_holders_cloak_start $OUTLINE_KEYS_PORT $CLOAK_PORT $DOMAIN_NAME
+    chmod a+x ./cloak_start.sh
+
+    rm -rf cloak-server.conf
+    cp "cloak-server-template.conf" "cloak-server.conf"
+
     docker-compose -f docker-compose.yaml up -d
+
 
     filename="creds.txt"
     declare -A array_creds
     array_creds["Special-url"]=$URL
-    array_creds["Cloak-public-key"]=$CLOAK_PUBLIC_KEY
-    array_creds["Cloak-private-key"]=$CLOAK_PRIVATE_KEY
-    array_creds["User-uid"]=$USER_UID
-    array_creds["Admin-uid"]=$ADMIN_UID
 
     save_credentials $filename
 

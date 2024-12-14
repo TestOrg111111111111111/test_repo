@@ -13,8 +13,10 @@ services:
   cloak-server:
     image: ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2.10.0.3
     container_name: ck-server
-    command: ["/app/ck-server", "-c", "/app/config.json"]
+      #command: ["/app/ck-server", "-c", "/app/config.json"]
+    command: ["/bin/bash", "/app/cloak_start.sh"]
     restart: always
     network_mode: "host"
     volumes:
       - ./cloak-server.conf:/app/config.json
+      - ./creds.txt:/app/creds.txt  
