@@ -6,17 +6,15 @@ services:
     container_name: caddy
     network_mode: "host"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile  
-    restart: unless-stopped
+      - ./data/Caddyfile:/etc/caddy/Caddyfile  
+    restart: always
 
 
   cloak-server:
     image: ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2.10.0.3
     container_name: ck-server
-      #command: ["/app/ck-server", "-c", "/app/config.json"]
-    command: ["/bin/bash", "/app/cloak_start.sh"]
-    restart: always
+    entrypoint: ["/app/data/cloak_start.sh"]  
     network_mode: "host"
     volumes:
-      - ./cloak-server.conf:/app/config.json
-      - ./creds.txt:/app/creds.txt  
+      - ./data:/app/data
+    restart: always

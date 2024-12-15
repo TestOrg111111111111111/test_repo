@@ -1,7 +1,7 @@
 #!/bin/bash
 
-function install_docker {
-    echo "Docker installation..."	
+function install_docker_compose {
+    echo "Docker-compose installation..."	
     #apt-get update
     #apt-get install -y docker.io docker-compose wget git
     # Add Docker's official GPG key:
@@ -18,7 +18,7 @@ function install_docker {
       sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
     sudo apt-get update
 
-    sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    sudo apt-get install docker-compose-plugin
 }
 
 function install_ss {
@@ -43,11 +43,9 @@ function run_ss {
 
 function replace_caddy_holders {
     # Accepts 3 args: $1 - domain name, $2 - secret-url, $3 - cloak-server port
-    rm -rf Caddyfile
-    cp "Caddyfile-template" "Caddyfile"
-    sed -i "s|<domain-name>|${1}|" "Caddyfile"
-    sed -i "s|<special-url>|${2}|" "Caddyfile"
-    sed -i "s|<cloak-server-port>|${3}|" "Caddyfile"
+    sed -i "s|<domain-name>|${1}|" "$pers_dir_name/Caddyfile"
+    sed -i "s|<special-url>|${2}|" "$pers_dir_name/Caddyfile"
+    sed -i "s|<cloak-server-port>|${3}|" "$pers_dir_name/Caddyfile"
 }
 
 
@@ -56,15 +54,15 @@ function save_credentials {
    # $1 - filename
 
     echo "Saving credentials"
-    if [ -f "$1" ]
+    if [ -f "$pers_dir_name/$creds_filename" ]
     then
-        echo "$1 already exists."
+        echo "$pers_dir_name/$creds_filename already exists."
         read -e -p "Do you want to override it?(Y/n): " choice
         case "$choice" in
 	        y|Y)
-                rm $1
+                rm "$pers_dir_name/$creds_filename"
                 for key in "${!array_creds[@]}"; do
-                    echo "$key => ${array_creds[$key]}" >> "$1"
+                    echo "$key => ${array_creds[$key]}" >> "$pers_dir_name/$creds_filename"
                 done
                 return
        	        ;;
@@ -75,7 +73,7 @@ function save_credentials {
     fi
 
     for key in "${!array_creds[@]}"; do
-        echo "$key => ${array_creds[$key]}" >> "$1"
+        echo "$key => ${array_creds[$key]}" >> "$pers_dir_name/$creds_filename"
     done
 }
 
@@ -112,43 +110,48 @@ function replace_holders_cloak_start {
     # $1 - keys-port for outline server
     # $2 - bind port for cloak server
     # $3 - domain name
-    sed -i "s|<1>|$1|" "cloak_start.sh"
-    sed -i "s|<2>|$2|" "cloak_start.sh"
-    sed -i "s|<3>|$3|" "cloak_start.sh"
+    sed -i "s|<1>|$1|" "$pers_dir_name/cloak_start.sh"
+    sed -i "s|<2>|$2|" "$pers_dir_name/cloak_start.sh"
+    sed -i "s|<3>|$3|" "$pers_dir_name/cloak_start.sh"
+}
+
+function create_persistent_dir {	
+    if [ -d "$pers_dir_name" ]; then
+    	rm -rf $pers_dir_name
+    fi
+    mkdir $pers_dir_name
+
+    cp "Caddyfile-template" "$pers_dir_name/Caddyfile"
+    cp "cloak_start_template.sh" "$pers_dir_name/cloak_start.sh"
+    cp "cloak-server-template.conf" "$pers_dir_name/cloak-server.conf"
+	
+    chmod a+x "$pers_dir_name/cloak_start.sh"
 }
 
 function main {
-
+    creds_filename="creds.txt"
+    pers_dir_name="data"
     readArgs	
 
-    install_docker
+    install_docker_compose
     install_ss
     run_ss $OUTLINE_API_PORT $OUTLINE_KEYS_PORT
 
     URL=$(generate_url)
-    replace_caddy_holders $DOMAIN_NAME $URL $CLOAK_PORT
-
+    create_persistent_dir
     stop_and_remove_caddy_cloak
-
-    rm -rf cloak_start.sh
-    cp "cloak_start_template.sh" "cloak_start.sh"
-	
+    replace_caddy_holders $DOMAIN_NAME $URL $CLOAK_PORT
     replace_holders_cloak_start $OUTLINE_KEYS_PORT $CLOAK_PORT $DOMAIN_NAME
-    chmod a+x ./cloak_start.sh
 
-    rm -rf cloak-server.conf
-    cp "cloak-server-template.conf" "cloak-server.conf"
-
-    docker-compose -f docker-compose.yaml up -d
+    docker compose -f docker-compose.yaml up -d
 
 
-    filename="creds.txt"
     declare -A array_creds
     array_creds["Special-url"]=$URL
 
-    save_credentials $filename
+    save_credentials
 
-    echo "All credentials are saved in $filename"
+    echo "All credentials are saved in $creds_filename"
     echo "Done!"
 }
 
