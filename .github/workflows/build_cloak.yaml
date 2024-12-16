@@ -49,7 +49,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           image-name: cloak-server
           dockerfile: Dockerfile-cloak-server
-          image-tag: ${{ env.COMPLETE_VERSION }}
+          image-tag: ${{ env.CLOAK_VERSION }}.${{ github.run_number }}
 
       - name: Commit updated version
         env:
