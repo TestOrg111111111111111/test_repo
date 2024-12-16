@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  caddy:
+    image: caddy:2.8.4
+    container_name: caddy
+    network_mode: "host"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile  
+    restart: always
+
+
+  cloak-server:
+    image: ghcr.io/dobbyvpn/dobbyvpn-server/cloak-server:v2.10.0.3
+    container_name: ck-server
+    entrypoint: ["/app/data/cloak_start.sh"]  
+    network_mode: "host"
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    volumes:
+      - /root/dobbyvpn-server/data/:/app/data/
+    restart: always
+
+  shadowbox:
+    image: quay.io/outline/shadowbox:stable
+    container_name: shadowbox
+    network_mode: "host"
+    environment:
+      - SB_STATE_DIR=/opt/outline/persisted-state
+      - SB_API_PORT=<outline-api-port>
+      - SB_API_PREFIX=<outline-api-prefix>
+      - SB_CERTIFICATE_FILE=/opt/outline/persisted-state/shadowbox-selfsigned.crt
+      - SB_PRIVATE_KEY_FILE=/opt/outline/persisted-state/shadowbox-selfsigned.key
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    volumes:
+      - /opt/outline/persisted-state:/opt/outline/persisted-state
+    restart: "always"
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    network_mode: "host"
+    depends_on:
+      - caddy
+      - cloak-server
+      - shadowbox
+    command:
+      - "--cleanup"
+      - "--label-enable"
+      - "--tlsverify"
+      - "--interval"
+      - "3600"
+    labels:
+      com.centurylinklabs.watchtower: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: "always"

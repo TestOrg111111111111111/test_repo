@@ -51,30 +51,17 @@ function replace_caddy_holders {
 
 function save_credentials {
    # Function saves sensitive data to file
-   # $1 - filename
 
     echo "Saving credentials"
-    if [ -f "$pers_dir_name/$creds_filename" ]
-    then
-        echo "$pers_dir_name/$creds_filename already exists."
-        read -e -p "Do you want to override it?(Y/n): " choice
-        case "$choice" in
-	        y|Y)
-                rm "$pers_dir_name/$creds_filename"
-                for key in "${!array_creds[@]}"; do
-                    echo "$key => ${array_creds[$key]}" >> "$pers_dir_name/$creds_filename"
-                done
-                return
-       	        ;;
-	        n|N)
-                return
-    	        ;;
-        esac 
-    fi
-
     for key in "${!array_creds[@]}"; do
         echo "$key => ${array_creds[$key]}" >> "$pers_dir_name/$creds_filename"
     done
+}
+
+function print_credentials {
+    # Prints all credentials saved in $pers_dir_name/$creds_filename
+    
+    cat $pers_dir_name/$creds_filename
 }
 
 function readArgs {
@@ -89,20 +76,17 @@ function readArgs {
     fi
 }
 
-function stop_and_remove_caddy_cloak {
-    CONTAINERS=("caddy" "ck-server")
+function stop_remove_cont_by_name {
+    CONTAINER_NAME=$1
+    CONTAINER_ID=$(docker ps --filter "name=$CONTAINER_NAME" --format "{{.ID}}")
 
-    for CONTAINER in "${CONTAINERS[@]}"; do
-    CONTAINER_ID=$(docker ps -aq --filter "name=^${CONTAINER}$")
-    
-    if [ -n "$CONTAINER_ID" ]; then
-        echo "Found container: $CONTAINER (ID: $CONTAINER_ID)"
-        docker stop "$CONTAINER_ID" && echo "Stopped container: $CONTAINER"
-        docker rm "$CONTAINER_ID" && echo "Removed container: $CONTAINER"
+    if [[ -n "$CONTAINER_ID" ]]; then
+	echo "Found container: $CONTAINER_NAME (ID: $CONTAINER_ID)"
+        docker stop "$CONTAINER_ID" && echo "Stopped container: $CONTAINER_NAME"
+        docker rm "$CONTAINER_ID" && echo "Removed container: $CONTAINER_NAME"
     else
-        echo "No container found with name: $CONTAINER"
+        echo "No container found with name: $CONTAINER_NAME"
     fi
-    done
 }
 
 function replace_holders_cloak_start {
@@ -115,6 +99,15 @@ function replace_holders_cloak_start {
     sed -i "s|<3>|$3|" "$pers_dir_name/cloak_start.sh"
 }
 
+function replace_holders_compose {
+    # replaces all holders in docker-compose.yaml
+    # $1 - api port for shadowbox
+    # $2 - api prefix for shadowbox
+
+    sed -i "s|<outline-api-port>|$1|" "$pers_dir_name/docker-compose.yaml"
+    sed -i "s|<outline-api-prefix>|$2|" "$pers_dir_name/docker-compose.yaml"
+}
+
 function create_persistent_dir {	
     if [ -d "$pers_dir_name" ]; then
     	rm -rf $pers_dir_name
@@ -124,8 +117,74 @@ function create_persistent_dir {
     cp "Caddyfile-template" "$pers_dir_name/Caddyfile"
     cp "cloak_start_template.sh" "$pers_dir_name/cloak_start.sh"
     cp "cloak-server-template.conf" "$pers_dir_name/cloak-server.conf"
+    cp "docker-compose-template.yaml" "$pers_dir_name/docker-compose.yaml"
 	
     chmod a+x "$pers_dir_name/cloak_start.sh"
+}
+
+function test_compose {
+    # It makes sense to invoke this function only after install_ss
+    CONTAINER_WATCHTOWER_ID=$(docker ps --filter "name=watchtower" --format "{{.ID}}")
+    CONTAINER_SHADOWBOX_ID=$(docker ps --filter "name=shadowbox" --format "{{.ID}}")
+
+    if [[ -z "$CONTAINER_WATCHTOWER_ID" ]]; then
+        echo "Error: No running container found with name 'watchtower'."
+        return 1
+    fi
+
+    if [[ -z "$CONTAINER_SHADOWBOX_ID" ]]; then
+        echo "Error: No running container found with name 'shadowbox'."
+        return 1
+    fi
+
+    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/red5d/docker-autocompose $CONTAINER_WATCHTOWER_ID $CONTAINER_SHADOWBOX_ID > dump-compose-tmp.yaml
+
+    #we should delete in dump-compose-tmp.yaml 2 lines: hostname, SB_API_PREFIX
+    #otherwise the comparison will be always failed since these values are randomly generated
+    sed -i '/hostname/d' "dump-compose-tmp.yaml"
+    sed -i '/SB_API_PREFIX/d' "dump-compose-tmp.yaml"
+	
+    tmpfile=$(mktemp)
+    awk '
+BEGIN { in_env = 0 }
+/^ *environment:/ {
+    in_env = 1;
+    print $0;
+    next
+}
+/^ *- / && in_env {
+    env_lines[NR] = $0;
+    next
+}
+/^ *[^- ]/ && in_env {
+    in_env = 0;
+    for (line in env_lines) print env_lines[line] | "sort";
+    delete env_lines;
+}
+{ print $0 }
+END {
+    if (in_env) {
+        for (line in env_lines) print env_lines[line] | "sort";
+    }
+}' dump-compose-tmp.yaml > $tmpfile
+	
+    cp $tmpfile dump-compose-tmp.yaml
+
+    
+    if diff dump-compose.yaml dump-compose-tmp.yaml > /dev/null; then
+        echo "OK. dump-compose.yaml and dump-compose-tmp.yaml are identical."
+    else
+        echo "ERROR: dump-compose.yaml and dump-compose-tmp.yaml are different."
+	echo "You should manually do the following procedures:"
+	echo "1) Change docker-compose-template.yaml with respect to diff."
+	echo "2) Copy  dump-compose-tmp.yaml to dump-compose.yaml."
+	echo "3) Restart this script."
+	exit 1
+    fi
+}
+
+function get_api_prefix {
+    echo `tac $1 | rev | grep '/' | cut -d'/' -f1 | rev`
 }
 
 function main {
@@ -136,20 +195,28 @@ function main {
     install_docker_compose
     install_ss
     run_ss $OUTLINE_API_PORT $OUTLINE_KEYS_PORT
+    test_compose
+    stop_remove_cont_by_name "watchtower"
+    stop_remove_cont_by_name "shadowbox"
 
     URL=$(generate_url)
     create_persistent_dir
-    stop_and_remove_caddy_cloak
+    stop_remove_cont_by_name "caddy"
+    stop_remove_cont_by_name "ck-server"
     replace_caddy_holders $DOMAIN_NAME $URL $CLOAK_PORT
     replace_holders_cloak_start $OUTLINE_KEYS_PORT $CLOAK_PORT $DOMAIN_NAME
+    OUTLINE_API_PREFIX=$(get_api_prefix "/opt/outline/access.txt")
+    replace_holders_compose $OUTLINE_API_PORT $OUTLINE_API_PREFIX
 
-    docker compose -f docker-compose.yaml up -d
+    echo "Starting docker compose..."
+    docker compose -f $pers_dir_name/docker-compose.yaml up -d
 
 
     declare -A array_creds
     array_creds["Special-url"]=$URL
 
     save_credentials
+    print_credentials
 
     echo "All credentials are saved in $creds_filename"
     echo "Done!"

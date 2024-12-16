@@ -28,4 +28,4 @@ Below is a sample configuration for the Cloak client:
 
 Installation script: **install_script.sh**. It works in an interactive mode without having to enter params via cli keys.
 
-
+**Docker-Autocompose**: docker run --rm -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/red5d/docker-autocompose <CONTAINER-ID> <CONTAINER-ID> > dump-compose.yaml
