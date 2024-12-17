@@ -2,7 +2,7 @@ permissions:
   packages: write
   contents: write
 
-name: Build and Push Docker Image(NEW)
+name: Build and Push Docker Images
 on:
   workflow_dispatch:
   push:
@@ -11,7 +11,7 @@ on:
   
 
 jobs:
-  build-and-push:
+  build-and-push-cloak:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,7 +26,7 @@ jobs:
           echo "CLOAK_VERSION=$CLOAK_VERSION"
           echo "CLOAK_VERSION=$CLOAK_VERSION" >> $GITHUB_ENV
 
-      - name: Build and Publish latest Docker image
+      - name: Build and Publish latest Docker cloak image
         uses: DrSkunk/gp-docker-action@1.1.9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -34,4 +34,25 @@ jobs:
           dockerfile: Dockerfile-cloak-server
           image-tag: ${{ env.CLOAK_VERSION }}.${{ github.run_number }}
 
- 
+  build-and-push-awg:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setting AWG version
+        run: |
+          git clone https://github.com/amnezia-vpn/amneziawg-go.git
+          cd amneziawg-go
+          AWG_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo "AWG_VERSION=$AWG_VERSION"
+          echo "AWG_VERSION=$AWG_VERSION" >> $GITHUB_ENV
+
+      - name: Build and Publish latest Docker AWG image
+        uses: DrSkunk/gp-docker-action@1.1.9
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          image-name: awg-server
+          dockerfile: Dockerfile
+          image-tag: ${{ env.AWG_VERSION }}.${{ github.run_number }}
