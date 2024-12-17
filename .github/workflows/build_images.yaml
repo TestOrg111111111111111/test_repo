@@ -45,6 +45,8 @@ jobs:
 
       - name: Setting AWG version
         run: |
+          ls
+          pwd
           AWG_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
           echo "AWG_VERSION=$AWG_VERSION"
           echo "AWG_VERSION=$AWG_VERSION" >> $GITHUB_ENV
