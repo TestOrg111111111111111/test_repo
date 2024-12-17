@@ -66,11 +66,10 @@ jobs:
 
       - name: Build and Publish Docker AWG image
         run: |
-          ls
           cd amneziawg-go
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
           IMAGE_NAME="ghcr.io/$OWNER/$REPO/awg-server"
-          TAG="$IMAGE_NAME:"${{ env.AWG_VERSION }}
+          TAG="$IMAGE_NAME:"${{ env.AWG_VERSION }}.${{ github.run_number }}
           docker build -f Dockerfile -t "$TAG" .
           docker push "$TAG"
