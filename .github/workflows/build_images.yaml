@@ -50,6 +50,11 @@ jobs:
           echo "AWG_VERSION=$AWG_VERSION" >> $GITHUB_ENV
           cd ..
 
+      - name: test
+          run: |
+            ls 
+            pwd
+
       - name: Build and Publish latest Docker AWG image
         uses: DrSkunk/gp-docker-action@1.1.9
         with:
