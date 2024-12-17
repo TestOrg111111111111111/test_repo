@@ -104,8 +104,9 @@ function replace_holders_compose {
     # $1 - api port for shadowbox
     # $2 - api prefix for shadowbox
 
-    sed -i "s|<outline-api-port>|$1|" "$pers_dir_name/docker-compose.yaml"
-    sed -i "s|<outline-api-prefix>|$2|" "$pers_dir_name/docker-compose.yaml"
+    sed -i "s|<outline-api-port>|$1|g" "$pers_dir_name/docker-compose.yaml"
+    sed -i "s|<outline-keys-port>|$2|g" "$pers_dir_name/docker-compose.yaml"
+    sed -i "s|<outline-api-prefix>|$3|" "$pers_dir_name/docker-compose.yaml"
 }
 
 function create_persistent_dir {	
@@ -206,7 +207,7 @@ function main {
     replace_caddy_holders $DOMAIN_NAME $URL $CLOAK_PORT
     replace_holders_cloak_start $OUTLINE_KEYS_PORT $CLOAK_PORT $DOMAIN_NAME
     OUTLINE_API_PREFIX=$(get_api_prefix "/opt/outline/access.txt")
-    replace_holders_compose $OUTLINE_API_PORT $OUTLINE_API_PREFIX
+    replace_holders_compose $OUTLINE_API_PORT $OUTLINE_KEYS_PORT $OUTLINE_API_PREFIX
 
     echo "Starting docker compose..."
     docker compose -f $pers_dir_name/docker-compose.yaml up -d

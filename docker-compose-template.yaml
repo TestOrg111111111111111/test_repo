@@ -24,7 +24,11 @@ services:
   shadowbox:
     image: quay.io/outline/shadowbox:stable
     container_name: shadowbox
-    network_mode: "host"
+    network_mode: "bridge"
+    ports:
+      - 127.0.0.1:<outline-api-port>:<outline-api-port>
+      - 127.0.0.1:<outline-keys-port>:<outline-keys-port>
+
     environment:
       - SB_STATE_DIR=/opt/outline/persisted-state
       - SB_API_PORT=<outline-api-port>
