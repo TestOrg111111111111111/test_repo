@@ -40,11 +40,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          repository: https://github.com/amnezia-vpn/amneziawg-go.git
 
       - name: Setting AWG version
         run: |
-          git clone https://github.com/amnezia-vpn/amneziawg-go.git
-          cd amneziawg-go
+          #git clone https://github.com/amnezia-vpn/amneziawg-go.git
+          #cd amneziawg-go
           AWG_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
           echo "AWG_VERSION=$AWG_VERSION"
           echo "AWG_VERSION=$AWG_VERSION" >> $GITHUB_ENV
