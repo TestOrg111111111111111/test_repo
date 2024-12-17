@@ -41,7 +41,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          repository: https://github.com/amnezia-vpn/amneziawg-go.git
+          repository: amnezia-vpn/amneziawg-go
 
       - name: Setting AWG version
         run: |
