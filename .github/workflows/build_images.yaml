@@ -56,3 +56,4 @@ jobs:
           image-name: awg-server
           dockerfile: Dockerfile
           image-tag: ${{ env.AWG_VERSION }}.${{ github.run_number }}
+          build-context: ./amneziawg-go
