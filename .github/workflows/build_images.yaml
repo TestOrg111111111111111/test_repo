@@ -48,6 +48,7 @@ jobs:
           AWG_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
           echo "AWG_VERSION=$AWG_VERSION"
           echo "AWG_VERSION=$AWG_VERSION" >> $GITHUB_ENV
+          cd ..
 
       - name: Build and Publish latest Docker AWG image
         uses: DrSkunk/gp-docker-action@1.1.9
