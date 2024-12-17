@@ -51,9 +51,9 @@ jobs:
           cd ..
 
       - name: test
-          run: |
-            ls 
-            pwd
+        run: |
+          ls -la
+          pwd
 
       - name: Build and Publish latest Docker AWG image
         uses: DrSkunk/gp-docker-action@1.1.9
