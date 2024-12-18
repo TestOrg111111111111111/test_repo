@@ -26,15 +26,16 @@ jobs:
           echo "CLOAK_VERSION=$CLOAK_VERSION"
           echo "CLOAK_VERSION=$CLOAK_VERSION" >> $GITHUB_ENV
 
-      - name: Build and Publish Docker cloak image
-        uses: DrSkunk/gp-docker-action@1.1.9
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          image-name: cloak-server
-          dockerfile: Dockerfile-cloak-server
-          image-tag: ${{ env.CLOAK_VERSION }}.${{ github.run_number }}
-          image-tag: latest
-
+      - name: Build and Publish Docker Cloak image
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="ghcr.io/$OWNER/$REPO/cloak-server"
+          TAG="$IMAGE_NAME:"${{ env.CLOAK_VERSION }}
+          docker build -f Dockerfile-cloak-server -t "$TAG.${{ github.run_number }}" -t "$IMAGE_NAME:latest" .
+          docker push "$IMAGE_NAME" --all-tags
+      
+            
   build-and-push-awg:
     runs-on: ubuntu-latest
 
