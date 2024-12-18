@@ -71,5 +71,5 @@ jobs:
           REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
           IMAGE_NAME="ghcr.io/$OWNER/$REPO/awg-server"
           TAG="$IMAGE_NAME:"${{ env.AWG_VERSION }}
-          docker build -f Dockerfile -t "$TAG:${{ github.run_number }}" -t "$TAG:latest" .
+          docker build -f Dockerfile -t "$TAG.${{ github.run_number }}" -t "$IMAGE_NAME:latest" .
           docker push "$IMAGE_NAME" --all-tags
