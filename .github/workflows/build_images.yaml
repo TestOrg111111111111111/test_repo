@@ -33,6 +33,7 @@ jobs:
           image-name: cloak-server
           dockerfile: Dockerfile-cloak-server
           image-tag: ${{ env.CLOAK_VERSION }}.${{ github.run_number }}
+          image-tag: latest
 
   build-and-push-awg:
     runs-on: ubuntu-latest
