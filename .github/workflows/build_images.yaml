@@ -1,7 +1,3 @@
-permissions:
-  packages: write
-  contents: write
-
 name: Build and Push Docker Images
 on:
   workflow_dispatch:
